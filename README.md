@@ -1,5 +1,3 @@
-# HG-CLI
-
 <p align="center">
   <img alt="GoReleaser Logo" src="https://avatars2.githubusercontent.com/u/1907637?v=3&s=200" height="140" />
   <h3 align="center">HostedGraphite CLI</h3>
