@@ -1,27 +1,19 @@
 # HG-CLI
-Current Flags:
-* --apikey (required)
-* --action (install, update-apikey)
-* --agent (telegraf)
-* --installType (default, custom)
-* --plugins (custom install)
-* --config (config path for updating apikey)
 
-To run in TUI mode:
-go run . 
-or use the executable
+<p align="center">
+  <img alt="GoReleaser Logo" src="https://avatars2.githubusercontent.com/u/1907637?v=3&s=200" height="140" />
+  <h3 align="center">HostedGraphite CLI</h3>
+  <p align="center">Monitoring Made Easy.</p>
+</p>
 
-To run CLI mode - Install:
-```<go run . or .exe> --apikey <apikey> --action install --agent Telegraf```
+---
 
-That will install the default plugins.
+Everything you need to get started with monitoring using HostedGraphite.
 
-To run cusom install add the flags:
+## Documentation
 
-```--installType custom```
+Find full documentation at: [HostedGraphite Docs](https://docs.hostedgraphite.com/).
 
-```--plugins cpu,disk,...```
+## Get Started
 
-To make an apikey update:
-
-```<go run . or .exe> --apikey <apikey> --action update-apikey --agent Telegraf --config <config path>```
+Get started with HostedGraphite today by signing up for a free trial at [HostedGraphite](https://www.hostedgraphite.com/signup).
