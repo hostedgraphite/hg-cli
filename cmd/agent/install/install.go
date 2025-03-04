@@ -3,12 +3,13 @@ package install
 import (
 	//  "fmt"
 	"fmt"
-	"hg-cli/agentmanager"
-	"hg-cli/agentmanager/telegraf"
-	"hg-cli/agentmanager/utils"
-	"hg-cli/formatters"
-	"hg-cli/sysinfo"
 	"strings"
+
+	"github.com/hostedgraphite/hg-cli/agentmanager"
+	"github.com/hostedgraphite/hg-cli/agentmanager/telegraf"
+	"github.com/hostedgraphite/hg-cli/agentmanager/utils"
+	"github.com/hostedgraphite/hg-cli/formatters"
+	"github.com/hostedgraphite/hg-cli/sysinfo"
 
 	// windows color support
 	"github.com/charmbracelet/huh/spinner"

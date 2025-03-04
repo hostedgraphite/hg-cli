@@ -2,10 +2,11 @@ package cmd
 
 import (
 	"fmt"
-	"hg-cli/cmd/agent"
-	"hg-cli/styles"
-	"hg-cli/sysinfo"
 	"os"
+
+	"github.com/hostedgraphite/hg-cli/cmd/agent"
+	"github.com/hostedgraphite/hg-cli/styles"
+	"github.com/hostedgraphite/hg-cli/sysinfo"
 
 	"github.com/spf13/cobra"
 )

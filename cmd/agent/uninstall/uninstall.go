@@ -2,10 +2,11 @@ package uninstall
 
 import (
 	"fmt"
-	"hg-cli/agentmanager"
-	"hg-cli/agentmanager/utils"
-	"hg-cli/sysinfo"
 	"strings"
+
+	"github.com/hostedgraphite/hg-cli/agentmanager"
+	"github.com/hostedgraphite/hg-cli/agentmanager/utils"
+	"github.com/hostedgraphite/hg-cli/sysinfo"
 
 	"github.com/charmbracelet/huh/spinner"
 	"github.com/spf13/cobra"

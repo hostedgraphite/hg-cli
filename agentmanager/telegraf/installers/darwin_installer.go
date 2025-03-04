@@ -2,7 +2,8 @@ package installers
 
 import (
 	"fmt"
-	"hg-cli/agentmanager/telegraf/utils"
+
+	"github.com/hostedgraphite/hg-cli/agentmanager/telegraf/utils"
 )
 
 func TelegrafAgentInstallDarwin(pkgMngr, arch string, updates chan<- string) error {

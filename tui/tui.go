@@ -2,10 +2,11 @@ package tui
 
 import (
 	"fmt"
-	"hg-cli/sysinfo"
-	"hg-cli/tui/types"
-	"hg-cli/tui/views"
 	"os"
+
+	"github.com/hostedgraphite/hg-cli/sysinfo"
+	"github.com/hostedgraphite/hg-cli/tui/types"
+	"github.com/hostedgraphite/hg-cli/tui/views"
 
 	tea "github.com/charmbracelet/bubbletea"
 )

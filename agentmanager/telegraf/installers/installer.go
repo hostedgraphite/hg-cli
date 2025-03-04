@@ -2,10 +2,11 @@ package installers
 
 import (
 	"fmt"
-	"hg-cli/sysinfo"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/hostedgraphite/hg-cli/sysinfo"
 )
 
 func TelegrafAgentInstall(sysinfo sysinfo.SysInfo, updates chan<- string) error {
@@ -46,7 +47,7 @@ func TelegrafGraphiteUpdate(apikey, configPath string) error {
 	var err error
 
 	currentFilePath := configPath
-	newServerURL := "carbon.sandbox.hostedgraphite.com:2003"
+	newServerURL := "carbon.hostedgraphite.com:2003"
 	newPrefix := apikey + ".telegraf"
 	newTemplate := "## template = host.tags.measurement.field"
 

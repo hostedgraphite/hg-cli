@@ -1,6 +1,6 @@
 package agentmanager
 
-import "hg-cli/sysinfo"
+import "github.com/hostedgraphite/hg-cli/sysinfo"
 
 type Agent interface {
 	Install(apikey string, sysinfo sysinfo.SysInfo, options map[string]interface{}, updates chan<- string) error

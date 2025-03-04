@@ -3,9 +3,10 @@ package formatters
 import (
 	"bytes"
 	"fmt"
-	"hg-cli/styles"
 	"strings"
 	"text/template"
+
+	"github.com/hostedgraphite/hg-cli/styles"
 )
 
 type ActionSummary struct {

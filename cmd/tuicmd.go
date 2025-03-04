@@ -3,9 +3,10 @@ package cmd
 import (
 	// "fmt"
 	"fmt"
-	"hg-cli/sysinfo"
-	"hg-cli/tui"
 	"os"
+
+	"github.com/hostedgraphite/hg-cli/sysinfo"
+	"github.com/hostedgraphite/hg-cli/tui"
 
 	"github.com/spf13/cobra"
 )

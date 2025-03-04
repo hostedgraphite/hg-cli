@@ -1,11 +1,11 @@
 package agent
 
 import (
-	"hg-cli/agentmanager/utils"
-	"hg-cli/cmd/agent/apiupdater"
-	"hg-cli/cmd/agent/install"
-	"hg-cli/cmd/agent/uninstall"
-	"hg-cli/sysinfo"
+	"github.com/hostedgraphite/hg-cli/agentmanager/utils"
+	"github.com/hostedgraphite/hg-cli/cmd/agent/apiupdater"
+	"github.com/hostedgraphite/hg-cli/cmd/agent/install"
+	"github.com/hostedgraphite/hg-cli/cmd/agent/uninstall"
+	"github.com/hostedgraphite/hg-cli/sysinfo"
 
 	"github.com/spf13/cobra"
 )
