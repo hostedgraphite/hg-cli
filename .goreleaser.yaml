@@ -29,6 +29,18 @@ nfpms:
       - rpm
     maintainer: MetricFire <support@metricfire.com>
 
+brews:
+  - name: hg-cli
+    directory: Formula
+    repository:
+      owner: HostedGraphite
+      name: homebrew-hgcli
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    homepage: https://github.com/hostedgraphite/homebrew-hgcli
+    commit_author:
+      name: MetricFire
+      email: support@metricfire.com
+
 changelog:
   sort: asc
   filters:
