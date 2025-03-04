@@ -1,0 +1,33 @@
+plugins:
+  - cpu
+  - kernel
+  - mem
+  - processes
+  - swap
+  - system
+  - disk
+  - netstat
+  - internet_speed
+  - temp
+
+cpu:
+  percpu:
+    type: bool
+    defaultValue: true
+    description: "Report Per-CPU stats"
+  totalcpu:
+    type: bool
+    defaultValue: true
+    description: "Total System CPU Stats"
+  collect_cpu_time:
+    type: bool
+    defaultValue: false
+    description: "Collect CPU Time Metrics"
+  report_active:
+    type: bool
+    defaultValue: false
+    description: "Report Sum of all Non-idel CPU States"
+  core_tags:
+    type: bool
+    defaultValue: false
+    description: "Adds Tags if Available: core_id, physical_id"

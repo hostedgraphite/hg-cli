@@ -25,6 +25,3 @@ To run cusom install add the flags:
 To make an apikey update:
 
 ```<go run . or .exe> --apikey <apikey> --action update-apikey --agent Telegraf --config <config path>```
-
-
-### Currently Set to Sandbox Env and API validation is active, so you'll need to use a sandbox apikey.# hg-cli

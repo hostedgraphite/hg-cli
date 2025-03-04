@@ -1,0 +1,51 @@
+# Make sure to check the documentation at https://goreleaser.com
+
+version: 2
+project_name: hg-cli
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - format_overrides:
+    - goos: windows
+      formats: [zip]
+
+nfpms:
+  - description: |-
+      cli for hostedgraphite.
+      Interact with hostedgraphite directly from the command line.
+      Install and manage a slection of open source agents.
+    formats:
+      - deb
+      - rpm
+    maintainer: MetricFire <support@metricfire.com>
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+release:
+  prerelease: auto
+  footer: >-
+
+    ---
+
+    Released by [GoReleaser](https://github.com/goreleaser/goreleaser).
+
+universal_binaries:
+  - replace: true
+
+checksum:
+  name_template: 'checksums.txt'
