@@ -2,8 +2,9 @@ package uninstallers
 
 import (
 	"fmt"
-	"hg-cli/agentmanager/telegraf/utils"
 	"os"
+
+	"github.com/hostedgraphite/hg-cli/agentmanager/telegraf/utils"
 )
 
 func LinuxUninstall(operatingSystem, arch, distro, pkgMngr string, updates chan<- string) error {

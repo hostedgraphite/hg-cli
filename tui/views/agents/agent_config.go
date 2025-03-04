@@ -1,14 +1,14 @@
 package agents
 
 import (
-	"hg-cli/agentmanager/telegraf"
+	"github.com/hostedgraphite/hg-cli/agentmanager/telegraf"
 
-	"hg-cli/styles"
-	"hg-cli/sysinfo"
-	"hg-cli/tui/types"
-	"hg-cli/tui/views/config"
+	"github.com/hostedgraphite/hg-cli/styles"
+	"github.com/hostedgraphite/hg-cli/sysinfo"
+	"github.com/hostedgraphite/hg-cli/tui/types"
+	"github.com/hostedgraphite/hg-cli/tui/views/config"
 
-	"hg-cli/utils"
+	"github.com/hostedgraphite/hg-cli/utils"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/huh"

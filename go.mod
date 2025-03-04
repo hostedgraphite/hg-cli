@@ -1,4 +1,4 @@
-module hg-cli
+module github.com/hostedgraphite/hg-cli
 
 go 1.23.4
 

@@ -1,11 +1,12 @@
 package views
 
 import (
-	"hg-cli/styles"
-	"hg-cli/sysinfo"
-	"hg-cli/tui/types"
-	"hg-cli/tui/views/agents"
 	"strings"
+
+	"github.com/hostedgraphite/hg-cli/styles"
+	"github.com/hostedgraphite/hg-cli/sysinfo"
+	"github.com/hostedgraphite/hg-cli/tui/types"
+	"github.com/hostedgraphite/hg-cli/tui/views/agents"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"

@@ -1,8 +1,9 @@
 package agentmanager
 
 import (
-	"hg-cli/agentmanager/telegraf"
 	"strings"
+
+	"github.com/hostedgraphite/hg-cli/agentmanager/telegraf"
 )
 
 func GetAgent(agentName string) Agent {

@@ -1,9 +1,9 @@
 package main
 
 import (
-  "hg-cli/cmd"
+	"github.com/hostedgraphite/hg-cli/cmd"
 )
 
 func main() {
-  cmd.Execute()
+	cmd.Execute()
 }

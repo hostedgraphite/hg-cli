@@ -1,11 +1,12 @@
 package telegraf
 
 import (
-	"hg-cli/agentmanager/telegraf/apiupdater"
-	"hg-cli/agentmanager/telegraf/installers"
-	"hg-cli/agentmanager/telegraf/uninstallers"
-	"hg-cli/sysinfo"
 	"time"
+
+	"github.com/hostedgraphite/hg-cli/agentmanager/telegraf/apiupdater"
+	"github.com/hostedgraphite/hg-cli/agentmanager/telegraf/installers"
+	"github.com/hostedgraphite/hg-cli/agentmanager/telegraf/uninstallers"
+	"github.com/hostedgraphite/hg-cli/sysinfo"
 )
 
 type Telegraf struct {

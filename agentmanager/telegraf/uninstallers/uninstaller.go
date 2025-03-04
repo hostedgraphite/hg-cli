@@ -2,7 +2,8 @@ package uninstallers
 
 import (
 	"fmt"
-	"hg-cli/sysinfo"
+
+	"github.com/hostedgraphite/hg-cli/sysinfo"
 )
 
 func TelegrafUninstall(sysinfo sysinfo.SysInfo, updates chan<- string) error {

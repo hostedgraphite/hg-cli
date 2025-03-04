@@ -2,9 +2,10 @@ package agents
 
 import (
 	"fmt"
-	"hg-cli/styles"
-	"hg-cli/sysinfo"
-	"hg-cli/tui/types"
+
+	"github.com/hostedgraphite/hg-cli/styles"
+	"github.com/hostedgraphite/hg-cli/sysinfo"
+	"github.com/hostedgraphite/hg-cli/tui/types"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/huh"

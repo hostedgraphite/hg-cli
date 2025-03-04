@@ -1,14 +1,15 @@
 package agents
 
 import (
-	"hg-cli/agentmanager"
-	"hg-cli/agentmanager/telegraf"
-	"hg-cli/formatters"
-	"hg-cli/styles"
-	"hg-cli/sysinfo"
-	"hg-cli/tui/types"
 	"strings"
 	"time"
+
+	"github.com/hostedgraphite/hg-cli/agentmanager"
+	"github.com/hostedgraphite/hg-cli/agentmanager/telegraf"
+	"github.com/hostedgraphite/hg-cli/formatters"
+	"github.com/hostedgraphite/hg-cli/styles"
+	"github.com/hostedgraphite/hg-cli/sysinfo"
+	"github.com/hostedgraphite/hg-cli/tui/types"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
