@@ -99,14 +99,14 @@ func execute(apikey, agentName, path string, sysinfo sysinfo.SysInfo) error {
 	}
 
 	summary := formatters.ActionSummary{
-		Agent:    agentName,
-		Success:  true,
-		Action:   "Update Api Key",
-		Config:   path,
-		StartCmd: telegraf.ServiceDetails[sysinfo.Os]["restartCmd"],
+		Agent:      agentName,
+		Success:    true,
+		Action:     "Update Api Key",
+		Config:     path,
+		RestartCmd: telegraf.ServiceDetails[sysinfo.Os]["restartCmd"],
 	}
 
-	fmt.Print(formatters.GenerateCliSummary(summary))
+	fmt.Println(formatters.GenerateCliSummary(summary))
 
 	return err
 }
