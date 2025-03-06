@@ -3,6 +3,7 @@ package installers
 import (
 	"fmt"
 	"os"
+	"os/exec"
 
 	"strings"
 
@@ -134,8 +135,13 @@ func RunPluginConfig(telCmd, input, plugins, output, path, opersystem string, up
 		cmd = fmt.Sprintf("%s %s %s %s graphite config | %s", telCmd, input, plugins, output, sudoCmd)
 		err = utils.RunCommand("sh", []string{"-c", cmd}, updates)
 	} else if opersystem == "windows" {
-		cmd = fmt.Sprintf("& '%s' %s %s %s graphite config > '%s'", telCmd, input, plugins, output, path)
-		err = utils.RunCommand("powershell", []string{"-Command", cmd}, updates)
+		cmd = fmt.Sprintf("& '%s' %s %s %s graphite config", telCmd, input, plugins, output)
+		output, err := exec.Command("powershell", "-Command", cmd).CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("error installing telegraf: %v\nOutput: %s", err, output)
+		}
+		err = os.WriteFile(path, []byte(output), 0644)
+		return err
 	} else {
 		err = utils.RunCommand(telCmd, []string{input, plugins, output, "graphite", "config", ">", path}, updates)
 	}
