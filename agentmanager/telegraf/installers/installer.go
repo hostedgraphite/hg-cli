@@ -3,9 +3,10 @@ package installers
 import (
 	"fmt"
 	"os"
-	"os/exec"
+
 	"strings"
 
+	"github.com/hostedgraphite/hg-cli/agentmanager/utils"
 	"github.com/hostedgraphite/hg-cli/sysinfo"
 )
 
@@ -30,12 +31,12 @@ func TelegrafAgentInstall(sysinfo sysinfo.SysInfo, updates chan<- string) error 
 	return err
 }
 
-func TelegrafPluginInstall(configPath, telegrafCmd string, selectedPlugins []string, sysinfo sysinfo.SysInfo) error {
+func TelegrafPluginInstall(configPath, telCmd string, selectedPlugins []string, sysinfo sysinfo.SysInfo, updates chan<- string) error {
 	plugins := strings.Join(selectedPlugins, ":")
 	output := "--output-filter"
 	input := "--input-filter"
 
-	commandErr := RunPluginConfig(telegrafCmd, configPath, input, plugins, output, "graphite", "config")
+	commandErr := RunPluginConfig(telCmd, input, plugins, output, configPath, sysinfo.Os, updates)
 	if commandErr != nil {
 		return commandErr
 	}
@@ -43,7 +44,54 @@ func TelegrafPluginInstall(configPath, telegrafCmd string, selectedPlugins []str
 	return nil
 }
 
-func TelegrafGraphiteUpdate(apikey, configPath string) error {
+func TelegrafGraphiteUpdate(apikey, configPath, opersystem string, updates chan<- string) error {
+	var err error
+
+	if opersystem == "linux" {
+		err = linuxGraphiteUpdate(apikey, configPath)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	err = graphiteUpdater(apikey, configPath)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func linuxGraphiteUpdate(apikey, configPath string) error {
+	fullConfig, err := utils.ReadFile(configPath)
+	if err != nil {
+		return fmt.Errorf("error reading file: %v", err)
+	}
+
+	graphiteBlock := `\[\[outputs\.graphite\]\](?:.|\s)*?\[\[`
+
+	updates := map[string]string{
+		`prefix\s*=\s*".*?"`:    fmt.Sprintf(`prefix = "%s.telegraf"`, apikey),
+		`servers\s*=\s*\[.*?\]`: `servers = ["carbon.hostedgraphite.com:2003"]`,
+		`template\s*=\s*".*?"`:  `## template = "host.tags.measurement.field"`,
+	}
+	updatedConfig, err := utils.UpdateConfigBlock(fullConfig, graphiteBlock, updates)
+
+	if err != nil {
+		return fmt.Errorf("error during updating: %v", err)
+	}
+
+	err = utils.WriteFile(configPath, updatedConfig)
+
+	if err != nil {
+		return fmt.Errorf("error writing file:%v", err)
+	}
+
+	return nil
+}
+
+func graphiteUpdater(apikey, configPath string) error {
 	var err error
 
 	currentFilePath := configPath
@@ -71,25 +119,27 @@ func TelegrafGraphiteUpdate(apikey, configPath string) error {
 
 }
 
-func RunPluginConfig(command, path string, args ...string) error {
+func RunPluginConfig(telCmd, input, plugins, output, path, opersystem string, updates chan<- string) error {
+	var err error
+	var cmd string
 
-	file, err := os.Create(path)
+	_, err = os.Stat(path)
 	if err != nil {
-
-		return fmt.Errorf("error creating output file: %v", err)
+		utils.RunCommand("sudo", []string{"touch", path}, updates)
+		utils.RunCommand("sudo", []string{"chmod", "0644", path}, updates)
 	}
 
-	defer file.Close()
-
-	cmd := exec.Command(command, args...)
-	cmd.Stdout = file
-	cmd.Stderr = os.Stderr
-
-	err = cmd.Run()
-	if err != nil {
-
-		return fmt.Errorf("error executing command: %v", err)
+	if opersystem == "linux" {
+		sudoCmd := fmt.Sprintf("sudo tee %s > /dev/null", path)
+		cmd = fmt.Sprintf("%s %s %s %s graphite config | %s", telCmd, input, plugins, output, sudoCmd)
+		err = utils.RunCommand("sh", []string{"-c", cmd}, updates)
+	} else {
+		err = utils.RunCommand(telCmd, []string{input, plugins, output, "graphite", "config", ">", path}, updates)
 	}
 
-	return nil
+	if err != nil {
+		return err
+	}
+
+	return err
 }

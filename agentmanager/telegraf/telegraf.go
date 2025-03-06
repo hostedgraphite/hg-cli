@@ -39,16 +39,16 @@ func (t *Telegraf) Install(apikey string, sysinfo sysinfo.SysInfo, options map[s
 	telegrafCmd := ServiceDetails[t.sysinfo.Os]["serviceCmd"]
 
 	updates <- "Installing Telegraf Plugin"
-	err = installers.TelegrafPluginInstall(configPath, telegrafCmd, plugins, t.sysinfo)
+	err = installers.TelegrafPluginInstall(configPath, telegrafCmd, plugins, t.sysinfo, t.updates)
 	if err != nil {
 		t.updates <- "error installing plugins: " + err.Error()
 	}
 	time.Sleep(1 * time.Second)
 
 	updates <- "Updating Telegraf Graphite"
-	err = installers.TelegrafGraphiteUpdate(t.apikey, configPath)
+	err = installers.TelegrafGraphiteUpdate(t.apikey, configPath, t.sysinfo.Os, updates)
 	if err != nil {
-		t.updates <- "error installing plugins: " + err.Error()
+		t.updates <- "error updating telegraf config: " + err.Error()
 	}
 
 	t.updates <- "Completed Telegraf Agent Installation"
@@ -79,17 +79,18 @@ func (t *Telegraf) Uninstall(sysinfo sysinfo.SysInfo, updates chan<- string) err
 	return err
 }
 
-func (t *Telegraf) UpdateApiKey(apikey string, options map[string]interface{}, updates chan<- string) error {
+func (t *Telegraf) UpdateApiKey(apikey string, sysinfo sysinfo.SysInfo, options map[string]interface{}, updates chan<- string) error {
 	var err error
 	t.apikey = apikey
 	t.options = options
 	t.updates = updates
+	t.sysinfo = sysinfo
 
 	config := t.options["config"].(string)
 	time.Sleep(1 * time.Second)
 
 	updates <- "Updating Telegraf API Key"
-	err = apiupdater.UpdateFile(t.apikey, config)
+	err = apiupdater.UpdateFile(t.apikey, config, t.sysinfo.Os)
 	if err != nil {
 		updates <- "error updating API Key: "
 	}

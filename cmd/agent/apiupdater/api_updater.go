@@ -78,7 +78,7 @@ func execute(apikey, agentName, path string, sysinfo sysinfo.SysInfo) error {
 
 	go func() {
 		defer close(updates)
-		err = agent.UpdateApiKey(apikey, options, updates)
+		err = agent.UpdateApiKey(apikey, sysinfo, options, updates)
 		if err != nil {
 			updates <- "error updating api key"
 			return

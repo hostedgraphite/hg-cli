@@ -57,7 +57,7 @@ func (a *AgentRunner) Init() tea.Cmd {
 	case "Update Api Key":
 		go func() {
 			time.Sleep(2 * time.Second)
-			agent.UpdateApiKey(apikey, a.options, updates)
+			agent.UpdateApiKey(apikey, a.sysInfo, a.options, updates)
 		}()
 	case "Uninstall":
 		go func() {

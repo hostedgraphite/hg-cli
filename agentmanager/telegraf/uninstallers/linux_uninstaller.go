@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/hostedgraphite/hg-cli/agentmanager/telegraf/utils"
+	"github.com/hostedgraphite/hg-cli/agentmanager/utils"
 )
 
 func LinuxUninstall(operatingSystem, arch, distro, pkgMngr string, updates chan<- string) error {
@@ -24,7 +24,7 @@ func LinuxUninstall(operatingSystem, arch, distro, pkgMngr string, updates chan<
 func UbuntuDebUninstaller(updates chan<- string) error {
 	var err error
 
-	cmd := utils.RunCommand("apt-get", []string{"remove", "telegraf", "-y"}, updates)
+	cmd := utils.RunCommand("sudo", []string{"apt-get", "remove", "telegraf", "-y"}, updates)
 	if cmd != nil {
 		return fmt.Errorf("error uninstalling telegraf service: %v", cmd)
 	}
@@ -35,7 +35,7 @@ func UbuntuDebUninstaller(updates chan<- string) error {
 func CentOsRhelUninstaller(updates chan<- string) error {
 	var err error
 
-	cmd := utils.RunCommand("yum", []string{"remove", "telegraf", "-y"}, updates)
+	cmd := utils.RunCommand("sudo", []string{"yum", "remove", "telegraf", "-y"}, updates)
 	if cmd != nil {
 		return fmt.Errorf("error uninstalling telegraf service: %v", cmd)
 	}
@@ -57,10 +57,10 @@ func LinuxUninstaller(updates chan<- string) error {
 func LinuxDeleteFiles(updates chan<- string) error {
 	var err error
 
-	telelegrafDir := "/etc/telegraf"
-	err = os.RemoveAll(telelegrafDir)
-	if err != nil {
-		return fmt.Errorf("error removing telegraf directory: %w", err)
+	telegrafDir := "/etc/telegraf"
+
+	if err = utils.RunCommand("sudo", []string{"rm", "-rf", telegrafDir}, updates); err != nil {
+		return fmt.Errorf("error deleting telegraf files: %v", err)
 	}
 
 	return err
