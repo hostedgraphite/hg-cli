@@ -46,6 +46,7 @@ type summary struct {
 	Status,
 	KeyWord,
 	Items,
+	CtoAction,
 	Footer lipgloss.Style
 }
 
@@ -91,6 +92,10 @@ func SummaryStyles(status bool) summary {
 
 	s.KeyWord = lipgloss.NewStyle().
 		Foreground(blue)
+
+	s.CtoAction = lipgloss.NewStyle().
+		Inherit(s.Base).
+		Foreground(orange)
 
 	return s
 }

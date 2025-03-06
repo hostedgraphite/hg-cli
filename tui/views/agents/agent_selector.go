@@ -34,7 +34,7 @@ func NewAgentView(sysInfo sysinfo.SysInfo) *AgentsView {
 		huh.NewSelect[string]().
 			Key("agent").
 			Title("Select Agent").
-			Description("Select any of the following agents, and we will guide you through the installation").
+			Description("Select any of the following agents, and we will guide you through their installation").
 			Options(huh.NewOptions(agents...)...).
 			Value(&selectedAgent),
 
@@ -42,7 +42,7 @@ func NewAgentView(sysInfo sysinfo.SysInfo) *AgentsView {
 		huh.NewSelect[string]().
 			Key("action").
 			Title("Select Agent Action").
-			Description("Select any of the following agents, and we will guide you through the installation").
+			Description("Choose one of the following actions: Install, Update your Api key, Uninstall").
 			OptionsFunc(func() []huh.Option[string] {
 				switch selectedAgent {
 				case "OpenTelemetry (Comming Soon)":

@@ -120,11 +120,11 @@ func (a *AgentRunner) View() string {
 			}
 		} else if a.action == "Update Api Key" {
 			summary = formatters.ActionSummary{
-				Agent:    a.agent,
-				Success:  true,
-				Action:   a.action,
-				Config:   telegraf.GetConfigPath(a.sysInfo.Os, a.sysInfo.Arch),
-				StartCmd: telegraf.ServiceDetails[a.sysInfo.Os]["restartCmd"],
+				Agent:      a.agent,
+				Success:    true,
+				Action:     a.action,
+				Config:     telegraf.GetConfigPath(a.sysInfo.Os, a.sysInfo.Arch),
+				RestartCmd: telegraf.ServiceDetails[a.sysInfo.Os]["restartCmd"],
 			}
 		} else {
 			// Uninstall

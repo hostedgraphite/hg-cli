@@ -227,7 +227,8 @@ func updateAPIKeyGroup(header, apikey, path, operatingSytem, arch string) *huh.G
 				}
 				return nil
 			}).
-			Value(&apikey),
+			Value(&apikey).
+			EchoMode(huh.EchoModePassword),
 
 		huh.NewInput().
 			Title("Enter the file path").

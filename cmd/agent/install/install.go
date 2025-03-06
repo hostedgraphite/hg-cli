@@ -144,7 +144,7 @@ func execute(apikey, installType, agentName string, plugins []string, sysinfo sy
 		Error:    "",
 	}
 
-	fmt.Print(formatters.GenerateCliSummary(summary))
+	fmt.Println(formatters.GenerateCliSummary(summary))
 
 	return err
 }
