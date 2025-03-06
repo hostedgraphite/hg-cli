@@ -2,9 +2,8 @@ package installers
 
 import (
 	"fmt"
-	"os"
 
-	"github.com/hostedgraphite/hg-cli/agentmanager/telegraf/utils"
+	"github.com/hostedgraphite/hg-cli/agentmanager/utils"
 )
 
 var linuxArchFile = map[string]string{
@@ -30,22 +29,22 @@ func TelegrafAgentInstallLinux(operatingSystem, arch, distro, pkgMngr string, up
 
 func UbuntuDebInstall(updates chan<- string) error {
 	var err error
-	if err = utils.RunCommand("curl", []string{"--silent", "--location", "-O", "https://repos.influxdata.com/influxdata-archive.key"}, updates); err != nil {
+	if err = utils.RunCommand("sudo", []string{"curl", "--silent", "--location", "-O", "https://repos.influxdata.com/influxdata-archive.key"}, updates); err != nil {
 		return fmt.Errorf("failed to download GPG key: %v", err)
 	}
 
 	verifyCmd := "echo '943666881a1b8d9b849b74caebf02d3465d6beb716510d86a39f6c8e8dac7515  influxdata-archive.key' | sha256sum -c"
-	if err = utils.RunCommand("bash", []string{"-c", verifyCmd}, updates); err != nil {
+	if err = utils.RunCommand("sudo", []string{"bash", "-c", verifyCmd}, updates); err != nil {
 		return fmt.Errorf("failed to verify GPG key: %v", err)
 	}
 
 	addKeyCmd := "cat influxdata-archive.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/influxdata-archive.gpg > /dev/null"
-	if err = utils.RunCommand("bash", []string{"-c", addKeyCmd}, updates); err != nil {
+	if err = utils.RunCommand("sudo", []string{"bash", "-c", addKeyCmd}, updates); err != nil {
 		return fmt.Errorf("failed to add GPG key to trusted keys: %v", err)
 	}
 
 	addRepoCmd := "echo 'deb [signed-by=/etc/apt/trusted.gpg.d/influxdata-archive.gpg] https://repos.influxdata.com/debian stable main' | sudo tee /etc/apt/sources.list.d/influxdata.list"
-	if err = utils.RunCommand("bash", []string{"-c", addRepoCmd}, updates); err != nil {
+	if err = utils.RunCommand("sudo", []string{"bash", "-c", addRepoCmd}, updates); err != nil {
 		return fmt.Errorf("failed to add InfluxData repository: %v", err)
 	}
 
@@ -68,7 +67,7 @@ func CentOsRhelInstall(updates chan<- string) error {
 		return err
 	}
 
-	if err = utils.RunCommand("yum", []string{"install", "-y", "telegraf"}, updates); err != nil {
+	if err = utils.RunCommand("sudo", []string{"yum", "install", "-y", "telegraf"}, updates); err != nil {
 		return fmt.Errorf("error installing telegraf: %v", err)
 	}
 
@@ -84,21 +83,17 @@ enabled = 1
 gpgcheck = 1
 gpgkey = https://repos.influxdata.com/influxdata-archive_compat.key`
 
-	filePath := "/etc/yum.repos.d/influxdata.repo"
-	file, err := os.Create(filePath)
-	if err != nil {
-		return fmt.Errorf("error creating the file: %v", err)
-	}
-	defer file.Close()
+	err = utils.RunCommand(
+		"sh",
+		[]string{
+			"-c",
+			fmt.Sprintf("echo '%s' | sudo tee /etc/yum.repos.d/influxdata.repo", repo),
+		},
+		updates,
+	)
 
-	_, err = file.WriteString(repo)
 	if err != nil {
-		return fmt.Errorf("error writing to the file: %v", err)
-	}
-
-	err = os.Chmod(filePath, 0644)
-	if err != nil {
-		return fmt.Errorf("error setting file permissions: %v", err)
+		return err
 	}
 
 	return err

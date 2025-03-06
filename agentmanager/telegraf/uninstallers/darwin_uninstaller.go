@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/hostedgraphite/hg-cli/agentmanager/telegraf/utils"
+	"github.com/hostedgraphite/hg-cli/agentmanager/utils"
 )
 
 func DarwinUninstall(pkgMngr, arch string, updates chan<- string) error {
