@@ -2,8 +2,8 @@ package install
 
 import (
 	//  "fmt"
+	"context"
 	"fmt"
-	"strings"
 
 	"github.com/hostedgraphite/hg-cli/agentmanager"
 	"github.com/hostedgraphite/hg-cli/agentmanager/telegraf"
@@ -110,28 +110,34 @@ func execute(apikey, installType, agentName string, plugins []string, sysinfo sy
 		"plugins": selectedPlugins,
 	}
 
-	go func() {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	go func(ctx context.Context) {
 		defer close(updates)
 		err = agent.Install(apikey, sysinfo, options, updates)
 		if err != nil {
-			updates <- "error installing agent" + err.Error()
+			updates <- "error installing agent: " + err.Error()
+			ctx.Err()
 			return
 		}
-	}()
+		ctx.Done()
+	}(ctx)
 
-	err = spinner.New().Title("Updating In Progress...").Action(func() {
-		for msg := range updates {
-			fmt.Print("\r")
-			fmt.Print("\033[K")
-			fmt.Println(msg)
-			if strings.HasPrefix(msg, "error") || strings.HasPrefix(msg, "Completed") {
-				break
+	err = spinner.New().
+		Title("Updating In Progress...").
+		Context(ctx).
+		ActionWithErr(func(ctx context.Context) error {
+			for msg := range updates {
+				fmt.Print("\r")
+				fmt.Print("\033[K")
+				fmt.Println(msg)
 			}
-		}
-	}).Run()
-
+			return nil
+		}).
+		Run()
 	if err != nil {
-		return fmt.Errorf("error installing agent: %v", err)
+		return err
 	}
 
 	summary := formatters.ActionSummary{

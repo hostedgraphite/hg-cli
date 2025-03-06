@@ -3,8 +3,10 @@ package utils
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"os/exec"
 	"regexp"
 	"slices"
@@ -116,4 +118,33 @@ func UpdateConfigBlock(fullConfig, confBlock string, updates map[string]string) 
 	updatedConfig := configRegex.ReplaceAllString(fullConfig, updatedBlock)
 
 	return updatedConfig, nil
+}
+
+func GetLatestReleaseTag(repo_org string, repo_name string) (string, error) {
+	url := fmt.Sprintf("https://api.github.com/repos/%s/%s/releases/latest", repo_org, repo_name)
+	resp, err := http.Get(url)
+	if err != nil {
+		return "", fmt.Errorf("unable to get latest release tag: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("received status code: %d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("error reading response body: %v", err)
+	}
+
+	var release struct {
+		TagName string `json:"tag_name"`
+	}
+
+	err = json.Unmarshal(body, &release)
+	if err != nil {
+		return "", fmt.Errorf("error unmarshalling response body: %v", err)
+	}
+
+	return release.TagName, nil
 }

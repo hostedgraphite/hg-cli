@@ -3,6 +3,7 @@ package installers
 import (
 	"fmt"
 	"os"
+	"os/exec"
 
 	"strings"
 
@@ -23,7 +24,7 @@ func TelegrafAgentInstall(sysinfo sysinfo.SysInfo, updates chan<- string) error 
 	case "linux":
 		err = TelegrafAgentInstallLinux(operatingSystem, arch, distro, pkgMngr, updates)
 	case "windows":
-		err = TelegrafAgentInstallWindows(updates)
+		err = TelegrafAgentInstallWindows(arch, updates)
 	default:
 		err = fmt.Errorf("unsupported operating system: %v", err)
 	}
@@ -133,6 +134,14 @@ func RunPluginConfig(telCmd, input, plugins, output, path, opersystem string, up
 		sudoCmd := fmt.Sprintf("sudo tee %s > /dev/null", path)
 		cmd = fmt.Sprintf("%s %s %s %s graphite config | %s", telCmd, input, plugins, output, sudoCmd)
 		err = utils.RunCommand("sh", []string{"-c", cmd}, updates)
+	} else if opersystem == "windows" {
+		cmd = fmt.Sprintf("& '%s' %s %s %s graphite config", telCmd, input, plugins, output)
+		output, err := exec.Command("powershell", "-Command", cmd).CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("error installing telegraf: %v\nOutput: %s", err, output)
+		}
+		err = os.WriteFile(path, []byte(output), 0644)
+		return err
 	} else {
 		err = utils.RunCommand(telCmd, []string{input, plugins, output, "graphite", "config", ">", path}, updates)
 	}

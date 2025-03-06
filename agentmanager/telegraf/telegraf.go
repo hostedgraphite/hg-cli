@@ -1,6 +1,7 @@
 package telegraf
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/hostedgraphite/hg-cli/agentmanager/telegraf/apiupdater"
@@ -27,7 +28,8 @@ func (t *Telegraf) Install(apikey string, sysinfo sysinfo.SysInfo, options map[s
 	t.updates <- "Installing Telegraf Agent"
 	err = installers.TelegrafAgentInstall(t.sysinfo, t.updates)
 	if err != nil {
-		updates <- "error installing Agent: " + err.Error()
+		updates <- "error installing Telegraf: " + err.Error()
+		return err
 	}
 	time.Sleep(1 * time.Second)
 
@@ -38,14 +40,14 @@ func (t *Telegraf) Install(apikey string, sysinfo sysinfo.SysInfo, options map[s
 	configPath := GetConfigPath(t.sysinfo.Os, t.sysinfo.Arch)
 	telegrafCmd := ServiceDetails[t.sysinfo.Os]["serviceCmd"]
 
-	updates <- "Installing Telegraf Plugin"
+	updates <- "Configuring Telegraf Plugins"
 	err = installers.TelegrafPluginInstall(configPath, telegrafCmd, plugins, t.sysinfo, t.updates)
 	if err != nil {
 		t.updates <- "error installing plugins: " + err.Error()
 	}
 	time.Sleep(1 * time.Second)
 
-	updates <- "Updating Telegraf Graphite"
+	updates <- "Updating Telegraf Graphite Output Config"
 	err = installers.TelegrafGraphiteUpdate(t.apikey, configPath, t.sysinfo.Os, updates)
 	if err != nil {
 		t.updates <- "error updating telegraf config: " + err.Error()
@@ -64,7 +66,7 @@ func (t *Telegraf) Uninstall(sysinfo sysinfo.SysInfo, updates chan<- string) err
 	t.updates <- "Uninstalling Telegraf Agent"
 	err = uninstallers.TelegrafUninstall(t.sysinfo, updates)
 	if err != nil {
-		t.updates <- "error uninstalling Agent: "
+		t.updates <- fmt.Sprintf("error uninstalling Agent: %v", err)
 	}
 	time.Sleep(1 * time.Second)
 
