@@ -88,7 +88,7 @@ func execute(agentName string, sysinfo sysinfo.SysInfo) error {
 	}).Run()
 
 	if err != nil {
-		return fmt.Errorf("error installing agent: %v", err)
+		return fmt.Errorf("error uninstalling agent: %v", err)
 	}
 
 	return err
