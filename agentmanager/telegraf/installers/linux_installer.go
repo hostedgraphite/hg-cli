@@ -21,7 +21,7 @@ func TelegrafAgentInstallLinux(operatingSystem, arch, distro, pkgMngr string, up
 	} else if distro == "redhat" || distro == "centos" || distro == "rhel" && pkgMngr != "" {
 		err = CentOsRhelInstall(updates)
 	} else {
-		err = LinuxInstaller(operatingSystem, arch, updates)
+		err = LinuxInstaller(operatingSystem, arch, distro, updates)
 	}
 
 	return err
@@ -100,29 +100,50 @@ gpgkey = https://repos.influxdata.com/influxdata-archive_compat.key`
 
 }
 
-func LinuxInstaller(operatingSystem, arch string, updates chan<- string) error {
+func LinuxInstaller(operatingSystem, arch, distro string, updates chan<- string) error {
 	file := linuxArchFile[arch]
 	url := "https://dl.influxdata.com/telegraf/releases/" + file
 
-	if err := utils.RunCommand("wget", []string{url}, updates); err != nil {
+	if err := utils.RunCommand("sudo", []string{"wget", url, "-q"}, updates); err != nil {
 		return fmt.Errorf("error downloading file: %v", err)
 	}
 
-	if err := utils.RunCommand("tar", []string{"xf", file}, updates); err != nil {
+	if err := utils.RunCommand("sudo", []string{"tar", "xf", file}, updates); err != nil {
 		return fmt.Errorf("error running tar on file: %v", err)
 	}
 
-	if err := utils.RunCommand("mkdir", []string{"/etc/telegraf"}, updates); err != nil {
+	if err := utils.RunCommand("sudo", []string{"mkdir", "/etc/telegraf"}, updates); err != nil {
 		return fmt.Errorf("error making dir: %v", err)
 	}
 
-	if err := utils.RunCommand("mv", []string{"telegraf-1.33.1/etc/telegraf/telegraf.conf", "/etc/telegraf/"}, updates); err != nil {
+	if err := utils.RunCommand("sudo", []string{"mv", "telegraf-1.33.1/etc/telegraf/telegraf.conf", "/etc/telegraf/"}, updates); err != nil {
 		return fmt.Errorf("error moving conf file: %v", err)
 	}
 
-	if err := utils.RunCommand("mv", []string{"telegraf-1.33.1/usr/bin/telegraf", "/usr/local/bin"}, updates); err != nil {
+	if err := utils.RunCommand("sudo", []string{"mv", "telegraf-1.33.1/usr/bin/telegraf", "/usr/bin/"}, updates); err != nil {
 		return fmt.Errorf("error moving exe file: %v", err)
 	}
 
+	if err := utils.RunCommand("sudo", []string{"mv", "telegraf-1.33.1/usr/lib/telegraf/scripts/telegraf.service", "/etc/systemd/system/telegraf.service"}, updates); err != nil {
+		return fmt.Errorf("error moving service file: %v", err)
+	}
+
+	// create telegraf user
+	if err := utils.RunCommand("sudo", []string{"groupadd", "-g", "988", "telegraf"}, updates); err != nil {
+		return fmt.Errorf("error creating group: %v", err)
+	}
+	if err := utils.RunCommand("sudo", []string{"useradd", "-r", "-u", "989", "-g", "988", "-d", "/etc/telegraf", "-s", "/bin/false", "telegraf"}, updates); err != nil {
+		return fmt.Errorf("error creating user: %v", err)
+	}
+
+	if distro == "fedora" || distro == "centos" || distro == "rhel" {
+		// For Fedora/CentOs SELinux permissions
+		if err := utils.RunCommand("sudo", []string{"restorecon", "-Rv", "/usr/bin/telegraf"}, updates); err != nil {
+			return fmt.Errorf("error setting SELinux permissions: %v", err)
+		}
+		if err := utils.RunCommand("sudo", []string{"restorecon", "-Rv", "/etc/systemd/system/telegraf.service"}, updates); err != nil {
+			return fmt.Errorf("error setting SELinux permissions: %v", err)
+		}
+	}
 	return nil
 }

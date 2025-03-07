@@ -53,6 +53,8 @@ func checkDistroPkgMngr() (string, string) {
 		packageManager = "apt"
 	} else if distribution == "centos" || distribution == "redhat" || distribution == "rhel" {
 		packageManager = "yum"
+	} else if distribution == "fedora" {
+		packageManager = "dnf"
 	} else {
 		return "", ""
 	}

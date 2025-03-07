@@ -36,7 +36,7 @@ func ApiUpdateCmd(sysinfo sysinfo.SysInfo) *cobra.Command {
 			completed = true
 
 			cmd.MarkFlagRequired("apikey")
-			cmd.MarkFlagRequired("path")
+			cmd.MarkFlagRequired("config")
 
 			return nil
 		},

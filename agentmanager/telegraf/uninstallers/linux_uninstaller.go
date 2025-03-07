@@ -2,7 +2,6 @@ package uninstallers
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/hostedgraphite/hg-cli/agentmanager/utils"
 )
@@ -45,10 +44,28 @@ func CentOsRhelUninstaller(updates chan<- string) error {
 
 func LinuxUninstaller(updates chan<- string) error {
 	var err error
-	telegrafBin := "/usr/local/bin/telegraf"
-	err = os.Remove(telegrafBin)
-	if err != nil {
-		return fmt.Errorf("error removing telegraf binary: %w", err)
+	telegrafBin := "/usr/bin/telegraf"
+	telegrafDir := "/etc/telegraf"
+	telegrafSystemd := "/etc/systemd/system/telegraf.service"
+
+	if err = utils.RunCommand("sudo", []string{"systemctl", "stop", "telegraf"}, updates); err != nil {
+		return fmt.Errorf("error stopping telegraf service: %v", err)
+	}
+
+	if err = utils.RunCommand("sudo", []string{"rm", "-rf", telegrafBin}, updates); err != nil {
+		return fmt.Errorf("error stopping telegraf service: %v", err)
+	}
+
+	if err = utils.RunCommand("sudo", []string{"rm", "-rf", telegrafDir}, updates); err != nil {
+		return fmt.Errorf("error stopping telegraf service: %v", err)
+	}
+
+	if err = utils.RunCommand("sudo", []string{"rm", "-rf", telegrafSystemd}, updates); err != nil {
+		return fmt.Errorf("error stopping telegraf service: %v", err)
+	}
+
+	if err = utils.RunCommand("sudo", []string{"userdel", "telegraf"}, updates); err != nil {
+		return fmt.Errorf("error stopping telegraf service: %v", err)
 	}
 
 	return err
