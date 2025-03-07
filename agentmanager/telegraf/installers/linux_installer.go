@@ -7,10 +7,10 @@ import (
 )
 
 var linuxArchFile = map[string]string{
-	"amd64": "telegraf-1.33.1_linux_amd64.tar.gz",
-	"386":   "telegraf-1.33.1_linux_i386.tar.gz",
-	"armv8": "telegraf-1.33.1_linux_arm64.tar.gz",
-	"armv7": "telegraf-1.33.1_linux_armhf.tar.gz",
+	"amd64":  "telegraf-1.33.1_linux_amd64.tar.gz",
+	"386":    "telegraf-1.33.1_linux_i386.tar.gz",
+	"arm64":  "telegraf-1.33.1_linux_arm64.tar.gz",
+	"armv7l": "telegraf-1.33.1_linux_armhf.tar.gz",
 }
 
 func TelegrafAgentInstallLinux(operatingSystem, arch, distro, pkgMngr string, updates chan<- string) error {
