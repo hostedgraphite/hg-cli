@@ -143,7 +143,18 @@ func RunPluginConfig(telCmd, input, plugins, output, path, opersystem string, up
 		err = os.WriteFile(path, []byte(output), 0644)
 		return err
 	} else {
-		err = utils.RunCommand(telCmd, []string{input, plugins, output, "graphite", "config", ">", path}, updates)
+		command := exec.Command(telCmd, input, plugins, output, "graphite", "config")
+		file, err := os.Create(path)
+
+		if err != nil {
+			return fmt.Errorf("error creating output file: %v", err)
+		}
+		defer file.Close()
+		command.Stdout = file
+		if err := command.Run(); err != nil {
+			return fmt.Errorf("error running command: %v", err)
+		}
+		return nil
 	}
 
 	if err != nil {
