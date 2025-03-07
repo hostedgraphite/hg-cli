@@ -22,8 +22,8 @@ var ServiceDetails = map[string]map[string]string{
 		"configPath": "/etc/telegraf/telegraf.conf",
 		"confDir":    "/etc/telegraf",
 		"serviceCmd": "/usr/bin/telegraf",
-		"startCmd":   "service telegraf start",
-		"restartCmd": "service telegraf restart",
+		"startCmd":   "sudo service telegraf start",
+		"restartCmd": "sudo service telegraf restart",
 	},
 	"darwin": {
 		"configPathAmd": "/usr/local/etc/telegraf.conf",
