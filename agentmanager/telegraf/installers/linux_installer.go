@@ -18,7 +18,7 @@ func TelegrafAgentInstallLinux(operatingSystem, arch, distro, pkgMngr string, up
 
 	if distro == "ubuntu" || distro == "debian" && pkgMngr != "" {
 		err = UbuntuDebInstall(updates)
-	} else if distro == "redhat" || distro == "centos" || distro == "rhel" && pkgMngr != "" {
+	} else if distro == "redhat" || distro == "centos" || distro == "rhel" || distro == "fedora" && pkgMngr != "" {
 		err = CentOsRhelInstall(updates)
 	} else {
 		err = LinuxInstaller(operatingSystem, arch, distro, updates)

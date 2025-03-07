@@ -9,37 +9,19 @@ import (
 func LinuxUninstall(operatingSystem, arch, distro, pkgMngr string, updates chan<- string) error {
 	var err error
 
-	if distro == "ubuntu" || distro == "debian" && pkgMngr != "" {
-		err = UbuntuDebUninstaller(updates)
-	} else if distro == "redhat" || distro == "centos" || distro == "rhel" && pkgMngr != "" {
-		err = CentOsRhelUninstaller(updates)
-	} else {
+	if pkgMngr == "" || (distro != "ubuntu" && distro != "debian" && distro != "redhat" && distro != "centos" && distro != "rhel" && distro != "fedora") {
 		err = LinuxUninstaller(updates)
+	} else {
+		err = LinuxPkgMngrUninstaller(pkgMngr, updates)
 	}
-
 	return err
 }
 
-func UbuntuDebUninstaller(updates chan<- string) error {
-	var err error
-
-	cmd := utils.RunCommand("sudo", []string{"apt-get", "remove", "telegraf", "-y"}, updates)
-	if cmd != nil {
-		return fmt.Errorf("error uninstalling telegraf service: %v", cmd)
+func LinuxPkgMngrUninstaller(pkgMngr string, updates chan<- string) error {
+	if err := utils.RunCommand("sudo", []string{pkgMngr, "remove", "telegraf", "-y"}, updates); err != nil {
+		return fmt.Errorf("error uninstalling telegraf service: %v", err)
 	}
-
-	return err
-}
-
-func CentOsRhelUninstaller(updates chan<- string) error {
-	var err error
-
-	cmd := utils.RunCommand("sudo", []string{"yum", "remove", "telegraf", "-y"}, updates)
-	if cmd != nil {
-		return fmt.Errorf("error uninstalling telegraf service: %v", cmd)
-	}
-
-	return err
+	return nil
 }
 
 func LinuxUninstaller(updates chan<- string) error {
