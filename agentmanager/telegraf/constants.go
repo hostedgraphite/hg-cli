@@ -15,8 +15,8 @@ var ServiceDetails = map[string]map[string]string{
 	"windows": {
 		"configPath": "C:\\Program Files\\InfluxData\\telegraf\\telegraf.conf",
 		"serviceCmd": "C:\\Program Files\\InfluxData\\telegraf\\telegraf.exe",
-		"startCmd":   "C:\\Program Files\\InfluxData\\telegraf\\telegraf.exe --service start",
-		"restartCmd": "C:\\Program Files\\InfluxData\\telegraf\\telegraf.exe --service stop (then start)",
+		"startCmd":   `& "C:\Program Files\InfluxData\telegraf\telegraf.exe" --service-name telegraf service start`,
+		"restartCmd": `& "C:\Program Files\InfluxData\telegraf\telegraf.exe" --service-name telegraf service stop (then start)`,
 	},
 	"linux": {
 		"configPath": "/etc/telegraf/telegraf.conf",
