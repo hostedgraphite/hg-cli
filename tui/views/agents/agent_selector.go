@@ -2,6 +2,7 @@ package agents
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/hostedgraphite/hg-cli/styles"
 	"github.com/hostedgraphite/hg-cli/sysinfo"
@@ -11,8 +12,8 @@ import (
 	"github.com/charmbracelet/huh"
 )
 
-var agents = []string{"Telegraf", "OpenTelemetry (Comming Soon)"}
-var commingSoon = []string{"Comming Soon"}
+var agents = []string{"Telegraf", "OpenTelemetry"}
+var commingSoon = []string{"OpenTelemetry"}
 var agentActions = []string{"Install", "Update Api Key", "Uninstall"}
 
 type AgentsView struct {
@@ -36,6 +37,12 @@ func NewAgentView(sysInfo sysinfo.SysInfo) *AgentsView {
 			Title("Select Agent").
 			Description("Select any of the following agents, and we will guide you through their installation").
 			Options(huh.NewOptions(agents...)...).
+			Validate(func(agent string) error {
+				if slices.Contains(commingSoon, selectedAgent) {
+					return fmt.Errorf("Sorry, this agent is not yet available")
+				}
+				return nil
+			}).
 			Value(&selectedAgent),
 
 		// agent action
@@ -44,10 +51,9 @@ func NewAgentView(sysInfo sysinfo.SysInfo) *AgentsView {
 			Title("Select Agent Action").
 			Description("Choose one of the following actions: Install, Update your Api key, Uninstall").
 			OptionsFunc(func() []huh.Option[string] {
-				switch selectedAgent {
-				case "OpenTelemetry (Comming Soon)":
-					return huh.NewOptions(commingSoon...)
-				default:
+				if slices.Contains(commingSoon, selectedAgent) {
+					return huh.NewOptions([]string{"Comming Soon"}...)
+				} else {
 					return huh.NewOptions(agentActions...)
 				}
 			}, &selectedAgent).
@@ -89,10 +95,6 @@ func (a *AgentsView) Update(msg tea.Msg) (types.View, tea.Cmd) {
 			return a, tea.Quit
 		case "esc", "q":
 			return a, tea.Quit
-		case "enter":
-			if a.form.GetString("agent") != "" {
-				a.agent = a.form.GetString("agent")
-			}
 		}
 	}
 
@@ -107,9 +109,8 @@ func (a *AgentsView) Update(msg tea.Msg) (types.View, tea.Cmd) {
 	if a.form.State == huh.StateCompleted {
 		// The last selected value of the form doesn't update correctly
 		// so we use a Key() value in the form to then get the value.
-		if a.form.GetString("action") != "" {
-			a.action = a.form.GetString("action")
-		}
+		a.agent = a.form.GetString("agent")
+		a.action = a.form.GetString("action")
 		configurationView := NewAgentConfigView(a.agent, a.action, a.sysInfo)
 
 		return configurationView, configurationView.Init()
