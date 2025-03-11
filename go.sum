@@ -16,6 +16,8 @@ github.com/charmbracelet/bubbletea v1.3.4 h1:kCg7B+jSCFPLYRA52SDZjr51kG/fMUEoPoZ
 github.com/charmbracelet/bubbletea v1.3.4/go.mod h1:dtcUCyCGEX3g9tosuYiut3MXgY/Jsv9nKVdibKKRRXo=
 github.com/charmbracelet/huh v0.6.0 h1:mZM8VvZGuE0hoDXq6XLxRtgfWyTI3b2jZNKh0xWmax8=
 github.com/charmbracelet/huh v0.6.0/go.mod h1:GGNKeWCeNzKpEOh/OJD8WBwTQjV3prFAtQPpLv+AVwU=
+github.com/charmbracelet/huh v0.6.1-0.20250310115732-9b4438c58c9e h1:rluRrNdbZxIQICzW/fDO/VTgt4KLYyFQM8R6Sh9P9Jc=
+github.com/charmbracelet/huh v0.6.1-0.20250310115732-9b4438c58c9e/go.mod h1:KxTA8VTYA9RZqxcFZBnRLKNpCwHfu3fz0gNtjANA9Z4=
 github.com/charmbracelet/huh/spinner v0.0.0-20250109160224-6c6b31916f8e h1:1evzoX6fqBfx5U7dMfEz63eXc7afCJ+1LWYrOECxU8k=
 github.com/charmbracelet/huh/spinner v0.0.0-20250109160224-6c6b31916f8e/go.mod h1:YqGqPo+vKnyTc0xppm1sv3Ir8FwG9bSW2H33LT++Xdg=
 github.com/charmbracelet/huh/spinner v0.0.0-20250305131932-4a188eb1ecab h1:IHqC0aFYwObgRFCSMtUy9P5n+1yC41Ig5NmNzQY3r00=

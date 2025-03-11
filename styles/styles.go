@@ -169,7 +169,7 @@ func FormBaseStyles() *huh.Theme {
 	t.Focused.SelectSelector = t.Focused.SelectSelector.Foreground(orange).Blink(true)
 	t.Focused.SelectedOption = t.Focused.SelectedOption.Foreground(lightText).Background(dark).Bold(true)
 	t.Focused.UnselectedOption = t.Focused.UnselectedOption.Foreground(dark)
-	t.Focused.Base = t.Focused.Base.BorderLeft(false)
+	t.Focused.Base = lipgloss.NewStyle().BorderStyle(lipgloss.ThickBorder()).BorderForeground(blue).BorderLeft(true).PaddingLeft(1).MarginLeft(1)
 	t.Blurred = t.Focused
 
 	t.Blurred.NextIndicator = t.Focused.NextIndicator.Foreground(red)
@@ -194,11 +194,14 @@ func FormStyles() *huh.Theme {
 	t.Focused.TextInput.Prompt = t.Focused.TextInput.Prompt.Foreground(orange)
 	t.Focused.TextInput.Text = t.Focused.TextInput.Text.Foreground(blue)
 
-	// Multi select styles
+	// // Multi select styles
 	t.Focused.MultiSelectSelector = t.Focused.MultiSelectSelector.Foreground(orange).Blink(true)
 	t.Focused.SelectedPrefix = lipgloss.NewStyle().SetString("[🔥] ").Foreground(orange)
 	t.Focused.UnselectedPrefix = lipgloss.NewStyle().SetString("[ ] ").Foreground(purple)
 	t.Blurred = t.Focused
+	t.Blurred.SelectSelector = t.Blurred.SelectSelector.Blink(false)
+	t.Blurred.MultiSelectSelector = t.Blurred.MultiSelectSelector.Blink(false)
+	t.Blurred.Base = t.Blurred.Base.BorderStyle(lipgloss.HiddenBorder())
 
 	return t
 }
@@ -212,7 +215,6 @@ func AgentsPageStyle(agent string) *huh.Theme {
 	default:
 		t.Focused.NoteTitle = t.Focused.NoteTitle.Foreground(red).Bold(true).AlignHorizontal(lipgloss.Center).Width(80)
 	}
-	t.Blurred = t.Focused
 
 	return t
 }
