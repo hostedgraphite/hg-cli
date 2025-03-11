@@ -19,12 +19,15 @@ type SysInfo struct {
 	Height   int
 }
 
+var execCommand = exec.Command
+var osGeteUid = os.Getegid()
+
 func checkSudoPerm() bool {
-	return os.Geteuid() == 0
+	return osGeteUid == 0
 }
 
 func checkMacPkgMngr() (string, string) {
-	cmd := exec.Command("which", "brew")
+	cmd := execCommand("which", "brew")
 	err := cmd.Run()
 	if err != nil {
 		return "", ""
@@ -33,7 +36,7 @@ func checkMacPkgMngr() (string, string) {
 }
 
 func checkDistroPkgMngr() (string, string) {
-	cmd := exec.Command("cat", "/etc/os-release")
+	cmd := execCommand("cat", "/etc/os-release")
 	output, err := cmd.Output()
 	if err != nil {
 		return "", ""
@@ -64,7 +67,7 @@ func checkDistroPkgMngr() (string, string) {
 		return "", ""
 	}
 
-	cmd = exec.Command("which", packageManager)
+	cmd = execCommand("which", packageManager)
 	err = cmd.Run()
 
 	if err != nil {
