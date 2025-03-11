@@ -9,7 +9,7 @@ import (
 	"github.com/hostedgraphite/hg-cli/styles"
 )
 
-var ctoAction = "For more details on reviewing your metrics, visit the documentation:\nhttps://docs.hostedgraphite.com/agents-guide/hg-cli-recommended"
+var ctoAction = "For more details on reviewing your metrics, visit the documentation:\nhttps://docs.hostedgraphite.com/hg-cli"
 
 type ActionSummary struct {
 	Agent      string
