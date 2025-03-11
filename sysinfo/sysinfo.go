@@ -10,12 +10,17 @@ import (
 )
 
 type SysInfo struct {
-	Os      string
-	Arch    string
-	PkgMngr string
-	Distro  string
-	Width   int
-	Height  int
+	Os       string
+	Arch     string
+	PkgMngr  string
+	Distro   string
+	SudoPerm bool
+	Width    int
+	Height   int
+}
+
+func checkSudoPerm() bool {
+	return os.Geteuid() == 0
 }
 
 func checkMacPkgMngr() (string, string) {
@@ -71,6 +76,7 @@ func checkDistroPkgMngr() (string, string) {
 
 func GetSystemInformation() (SysInfo, error) {
 	var distro, pkgmngr string
+	sudoPerm := true
 
 	goOs := runtime.GOOS
 	goArch := runtime.GOARCH
@@ -79,6 +85,7 @@ func GetSystemInformation() (SysInfo, error) {
 		distro, pkgmngr = checkMacPkgMngr()
 	} else if goOs == "linux" {
 		distro, pkgmngr = checkDistroPkgMngr()
+		sudoPerm = checkSudoPerm()
 	} else {
 		pkgmngr = ""
 		distro = ""
@@ -87,12 +94,13 @@ func GetSystemInformation() (SysInfo, error) {
 	initialHeight, initialWidth := GetInitialDimensions()
 
 	system := SysInfo{
-		Os:      strings.ToLower(goOs),
-		Arch:    strings.ToLower(goArch),
-		PkgMngr: strings.ToLower(pkgmngr),
-		Distro:  strings.ToLower(distro),
-		Width:   initialWidth,
-		Height:  initialHeight,
+		Os:       strings.ToLower(goOs),
+		Arch:     strings.ToLower(goArch),
+		PkgMngr:  strings.ToLower(pkgmngr),
+		Distro:   strings.ToLower(distro),
+		SudoPerm: sudoPerm,
+		Width:    initialWidth,
+		Height:   initialHeight,
 	}
 
 	return system, nil
