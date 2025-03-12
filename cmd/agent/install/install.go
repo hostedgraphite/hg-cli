@@ -10,6 +10,7 @@ import (
 	"github.com/hostedgraphite/hg-cli/agentmanager/utils"
 	"github.com/hostedgraphite/hg-cli/formatters"
 	"github.com/hostedgraphite/hg-cli/sysinfo"
+	cliUtils "github.com/hostedgraphite/hg-cli/utils"
 
 	// windows color support
 	"github.com/charmbracelet/huh/spinner"
@@ -31,6 +32,11 @@ func InstallCmd(sysinfo sysinfo.SysInfo) *cobra.Command {
 		Long:          "Install a moniting agent. Use --custom for custom installation",
 		SilenceErrors: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
+			// Validate if the cmd requires sudo
+			if cliUtils.ActionRequiresSudo(sysinfo.Os, "install") && !sysinfo.SudoPerm {
+				return fmt.Errorf("this cmd requires admin privileges, please run as root")
+			}
+
 			// Check if the --list flag is added, which is a global flag
 			list, _ := cmd.Flags().GetBool("list")
 			if list {
