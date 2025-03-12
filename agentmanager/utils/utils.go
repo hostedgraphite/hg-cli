@@ -22,9 +22,11 @@ func ShowAvailableAgents() {
 		fmt.Println("- " + agent)
 	}
 }
+
 func ValidateAgent(agent string) bool {
 	return slices.Contains(agents, agent)
 }
+
 func RunCommand(cmd string, args []string, updates chan<- string) error {
 	command := exec.Command(cmd, args...)
 

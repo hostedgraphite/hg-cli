@@ -25,6 +25,12 @@ func checkSudoPerm() bool {
 	return os.Getegid() == 0
 }
 
+func checkSudoPermWindows() bool {
+	cmd := execCommand("net", "session")
+	err := cmd.Run()
+	return err == nil
+}
+
 func checkPkgMngr(packageManager string) bool {
 	cmd := execCommand("which", packageManager)
 	err := cmd.Run()
@@ -63,7 +69,7 @@ func checkDistroPkgMngr(releaseInfo string) (string, string) {
 
 func GetSystemInformation() (SysInfo, error) {
 	var distro, pkgmngr string
-	sudoPerm := false
+	var sudoPerm bool
 
 	goOs := runtime.GOOS
 	goArch := runtime.GOARCH
@@ -74,10 +80,12 @@ func GetSystemInformation() (SysInfo, error) {
 		pkgmngr = "brew"
 	case "linux":
 		releaseInfo, err := getOSRelease()
-		if err != nil {
+		if err == nil {
 			distro, pkgmngr = checkDistroPkgMngr(releaseInfo)
 			sudoPerm = checkSudoPerm()
 		}
+	case "windows":
+		sudoPerm = checkSudoPermWindows()
 	}
 
 	// Confirm that the package manager is installed

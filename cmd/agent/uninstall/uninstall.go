@@ -7,6 +7,7 @@ import (
 	"github.com/hostedgraphite/hg-cli/agentmanager"
 	"github.com/hostedgraphite/hg-cli/agentmanager/utils"
 	"github.com/hostedgraphite/hg-cli/sysinfo"
+	cliUtils "github.com/hostedgraphite/hg-cli/utils"
 
 	"github.com/charmbracelet/huh/spinner"
 	"github.com/spf13/cobra"
@@ -21,6 +22,11 @@ func UninstallCmd(sysinfo sysinfo.SysInfo) *cobra.Command {
 		Short: "Uninstall a monitoring agent.",
 		Long:  "Uninstall a monitoring agent.",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
+			// Validate if the cmd requires sudo
+			if cliUtils.ActionRequiresSudo(sysinfo.Os, "uninstall") && !sysinfo.SudoPerm {
+				return fmt.Errorf("this cmd requires admin privileges, please run as root")
+			}
+
 			list, _ := cmd.Flags().GetBool("list")
 			if list {
 				return nil
