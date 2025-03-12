@@ -126,13 +126,13 @@ func RunPluginConfig(telCmd, input, plugins, output, path, opersystem string, up
 
 	_, err = os.Stat(path)
 	if err != nil {
-		utils.RunCommand("sudo", []string{"touch", path}, updates)
-		utils.RunCommand("sudo", []string{"chmod", "0644", path}, updates)
+		utils.RunCommand("touch", []string{path}, updates)
+		utils.RunCommand("chmod", []string{"0644", path}, updates)
 	}
 
 	if opersystem == "linux" {
-		sudoCmd := fmt.Sprintf("sudo tee %s > /dev/null", path)
-		cmd = fmt.Sprintf("%s %s %s %s graphite config | %s", telCmd, input, plugins, output, sudoCmd)
+		fileWriter := fmt.Sprintf("tee %s > /dev/null", path)
+		cmd = fmt.Sprintf("%s %s %s %s graphite config | %s", telCmd, input, plugins, output, fileWriter)
 		err = utils.RunCommand("sh", []string{"-c", cmd}, updates)
 	} else if opersystem == "windows" {
 		cmd = fmt.Sprintf("& '%s' %s %s %s graphite config", telCmd, input, plugins, output)
