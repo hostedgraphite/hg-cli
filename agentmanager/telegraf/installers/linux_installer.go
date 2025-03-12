@@ -110,13 +110,13 @@ gpgkey = https://repos.influxdata.com/influxdata-archive_compat.key`
 func LinuxInstaller(operatingSystem, arch, distro string, updates chan<- string) error {
 	file := linuxArchFile[arch]
 	url := "https://dl.influxdata.com/telegraf/releases/" + file
-    version := "telegraf-1.33.1/"
-    tmpDir := "/tmp/hg-cli/"
+	version := "telegraf-1.33.1/"
+	tmpDir := "/tmp/hg-cli/"
 	tmpPath := "/tmp/hg-cli/" + file
 
-    if err := utils.RunCommand("mkdir", []string{tmpDir}, updates); err != nil {
-        return fmt.Errorf("error creating temp dir")
-    }
+	if err := utils.RunCommand("mkdir", []string{tmpDir}, updates); err != nil {
+		return fmt.Errorf("error creating temp dir")
+	}
 
 	if err := utils.RunCommand("wget", []string{url, "-q", "-O", tmpPath}, updates); err != nil {
 		return fmt.Errorf("error downloading file: %v", err)
@@ -130,10 +130,10 @@ func LinuxInstaller(operatingSystem, arch, distro string, updates chan<- string)
 		return fmt.Errorf("error making dir: %v", err)
 	}
 
-    telegrafPath := tmpDir + version
-    telegrafConf := telegrafPath + "etc/telegraf/telegraf.conf"
-    telegrafBin := telegrafPath + "usr/bin/telegraf"
-    telegrafService := telegrafPath + "usr/lib/telegraf/scripts/telegraf.service"
+	telegrafPath := tmpDir + version
+	telegrafConf := telegrafPath + "etc/telegraf/telegraf.conf"
+	telegrafBin := telegrafPath + "usr/bin/telegraf"
+	telegrafService := telegrafPath + "usr/lib/telegraf/scripts/telegraf.service"
 
 	if err := utils.RunCommand("mv", []string{telegrafConf, "/etc/telegraf/"}, updates); err != nil {
 		return fmt.Errorf("error moving conf file: %v", err)
@@ -165,9 +165,9 @@ func LinuxInstaller(operatingSystem, arch, distro string, updates chan<- string)
 		}
 	}
 
-    if err := utils.RunCommand("rm", []string{"-rf", tmpDir}, updates); err != nil {
-        return fmt.Errorf("error cleaning up temp dir")
-    }
+	if err := utils.RunCommand("rm", []string{"-rf", tmpDir}, updates); err != nil {
+		return fmt.Errorf("error cleaning up temp dir")
+	}
 
 	return nil
 }
