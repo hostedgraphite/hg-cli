@@ -7,6 +7,7 @@ import (
 	"github.com/hostedgraphite/hg-cli/styles"
 	"github.com/hostedgraphite/hg-cli/sysinfo"
 	"github.com/hostedgraphite/hg-cli/tui/types"
+	"github.com/hostedgraphite/hg-cli/utils"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/huh"
@@ -57,6 +58,12 @@ func NewAgentView(sysInfo sysinfo.SysInfo) *AgentsView {
 					return huh.NewOptions(agentActions...)
 				}
 			}, &selectedAgent).
+			Validate(func(action string) error {
+				if utils.ActionRequiresSudo(sysInfo.Os, action) && !sysInfo.SudoPerm {
+					return fmt.Errorf("This action requires admin privileges, please run as root")
+				}
+				return nil
+			}).
 			Value(&selectedAction),
 	)
 

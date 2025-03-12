@@ -10,32 +10,42 @@ import (
 )
 
 type SysInfo struct {
-	Os      string
-	Arch    string
-	PkgMngr string
-	Distro  string
-	Width   int
-	Height  int
+	Os       string
+	Arch     string
+	PkgMngr  string
+	Distro   string
+	SudoPerm bool
+	Width    int
+	Height   int
 }
 
-func checkMacPkgMngr() (string, string) {
-	cmd := exec.Command("which", "brew")
+var execCommand = exec.Command
+
+func checkSudoPerm() bool {
+	return os.Getegid() == 0
+}
+
+func checkSudoPermWindows() bool {
+	cmd := execCommand("net", "session")
 	err := cmd.Run()
-	if err != nil {
-		return "", ""
-	}
-	return "", "brew"
+	return err == nil
 }
 
-func checkDistroPkgMngr() (string, string) {
-	cmd := exec.Command("cat", "/etc/os-release")
-	output, err := cmd.Output()
-	if err != nil {
-		return "", ""
-	}
+func checkPkgMngr(packageManager string) bool {
+	cmd := execCommand("which", packageManager)
+	err := cmd.Run()
+	return err == nil
+}
 
+func getOSRelease() (string, error) {
+	cmd := execCommand("cat", "/etc/os-release")
+	output, err := cmd.Output()
+	return string(output), err
+}
+
+func checkDistroPkgMngr(releaseInfo string) (string, string) {
 	var distribution string
-	lines := strings.Split(string(output), "\n")
+	lines := strings.Split(releaseInfo, "\n")
 	for _, line := range lines {
 		if strings.HasPrefix(line, "ID=") {
 			distribution = strings.TrimPrefix(line, "ID=")
@@ -44,55 +54,55 @@ func checkDistroPkgMngr() (string, string) {
 		}
 	}
 
-	if distribution == "" {
-		return "", ""
-	}
-
 	var packageManager string
-	if distribution == "ubuntu" || distribution == "debian" {
-		packageManager = "apt"
-	} else if distribution == "centos" || distribution == "redhat" || distribution == "rhel" {
-		packageManager = "yum"
-	} else if distribution == "fedora" {
-		packageManager = "dnf"
-	} else {
-		return "", ""
+	var distroMap = map[string]string{
+		"ubuntu": "apt",
+		"debian": "apt",
+		"redhat": "yum",
+		"centos": "yum",
+		"rhel":   "yum",
+		"fedora": "dnf",
 	}
-
-	cmd = exec.Command("which", packageManager)
-	err = cmd.Run()
-
-	if err != nil {
-		return distribution, ""
-	}
-
+	packageManager = distroMap[distribution]
 	return distribution, packageManager
 }
 
 func GetSystemInformation() (SysInfo, error) {
 	var distro, pkgmngr string
+	var sudoPerm bool
 
 	goOs := runtime.GOOS
 	goArch := runtime.GOARCH
 
-	if goOs == "darwin" {
-		distro, pkgmngr = checkMacPkgMngr()
-	} else if goOs == "linux" {
-		distro, pkgmngr = checkDistroPkgMngr()
-	} else {
+	// Determine the package manager & distro
+	switch goOs {
+	case "darwin":
+		pkgmngr = "brew"
+	case "linux":
+		releaseInfo, err := getOSRelease()
+		if err == nil {
+			distro, pkgmngr = checkDistroPkgMngr(releaseInfo)
+			sudoPerm = checkSudoPerm()
+		}
+	case "windows":
+		sudoPerm = checkSudoPermWindows()
+	}
+
+	// Confirm that the package manager is installed
+	if !checkPkgMngr(pkgmngr) {
 		pkgmngr = ""
-		distro = ""
 	}
 
 	initialHeight, initialWidth := GetInitialDimensions()
 
 	system := SysInfo{
-		Os:      strings.ToLower(goOs),
-		Arch:    strings.ToLower(goArch),
-		PkgMngr: strings.ToLower(pkgmngr),
-		Distro:  strings.ToLower(distro),
-		Width:   initialWidth,
-		Height:  initialHeight,
+		Os:       strings.ToLower(goOs),
+		Arch:     strings.ToLower(goArch),
+		PkgMngr:  strings.ToLower(pkgmngr),
+		Distro:   strings.ToLower(distro),
+		SudoPerm: sudoPerm,
+		Width:    initialWidth,
+		Height:   initialHeight,
 	}
 
 	return system, nil

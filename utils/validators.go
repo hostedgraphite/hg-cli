@@ -3,6 +3,8 @@ package utils
 import (
 	"fmt"
 	"net/http"
+	"slices"
+	"strings"
 )
 
 func ValidateAPIKey(apikey string) error {
@@ -21,4 +23,24 @@ func ValidateAPIKey(apikey string) error {
 	}
 
 	return nil
+}
+
+func ActionRequiresSudo(os string, action string) bool {
+	action = strings.ToLower(action)
+	needSudo := true
+	sudoActions := []string{"install", "uninstall", "update"}
+
+	switch os {
+	case "darwin":
+		// We'll install with brew
+		needSudo = false
+	case "linux":
+		needSudo = slices.Contains(sudoActions, action)
+	case "windows":
+		needSudo = slices.Contains(sudoActions, action)
+	default:
+		needSudo = false
+	}
+
+	return needSudo
 }
