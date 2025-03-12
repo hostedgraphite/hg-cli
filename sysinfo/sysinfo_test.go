@@ -8,11 +8,8 @@ import (
 )
 
 var orininalExecCommand = execCommand
-var originalOsGeteUid = osGeteUid
 
-func TestCheckUbuntuDistroPkgMngr(t *testing.T) {
-	defer func() { execCommand = orininalExecCommand }()
-	output := `
+const UbunutRelease = `
 NAME="Ubuntu"
 VERSION="20.04.5 LTS (Focal Fossa)"
 ID=ubuntu
@@ -27,21 +24,15 @@ VERSION_CODENAME=focal
 UBUNTU_CODENAME=focal
 `
 
+func TestCheckUbuntuDistroPkgMngr(t *testing.T) {
 	expectedOs, expectedPkgMngr := "ubuntu", "apt"
-
-	execCommand = func(name string, arg ...string) *exec.Cmd {
-		return exec.Command("echo", output)
-	}
-
-	os, pkgMngr := checkDistroPkgMngr()
-	require.Equal(t, expectedOs, os)
+	distro, pkgMngr := checkDistroPkgMngr(UbunutRelease)
+	require.Equal(t, expectedOs, distro)
 	require.Equal(t, expectedPkgMngr, pkgMngr)
 
 }
 
-func TestFedoraDistorPkg(t *testing.T) {
-	defer func() { execCommand = orininalExecCommand }()
-	output := `
+const FedoraRelease = `
 NAME=Fedora
 VERSION="28 (Twenty Eight)"
 ID=fedora
@@ -62,19 +53,14 @@ REDHAT_SUPPORT_PRODUCT_VERSION=28
 PRIVACY_POLICY_URL="https://fedoraproject.org/wiki/Legal:PrivacyPolicy"
 `
 
+func TestFedoraDistorPkg(t *testing.T) {
 	expectedOs, expectedPkgMngr := "fedora", "dnf"
-	execCommand = func(name string, arg ...string) *exec.Cmd {
-		return exec.Command("echo", output)
-	}
-
-	os, pkgMngr := checkDistroPkgMngr()
-	require.Equal(t, expectedOs, os)
+	distro, pkgMngr := checkDistroPkgMngr(FedoraRelease)
+	require.Equal(t, expectedOs, distro)
 	require.Equal(t, expectedPkgMngr, pkgMngr)
 }
 
-func TestRhelDistroPkg(t *testing.T) {
-	defer func() { execCommand = orininalExecCommand }()
-	output := `
+const CentOSRelease = `
 NAME="CentOS Linux"
 VERSION="8"
 ID="centos"
@@ -89,56 +75,35 @@ BUG_REPORT_URL="https://bugs.centos.org/"
 CENTOS_MANTISBT_PROJECT="CentOS-8"
 CENTOS_MANTISBT_PROJECT_VERSION="8"
 `
+
+func TestRhelDistroPkg(t *testing.T) {
 	expectedOs, expectedPkgMngr := "centos", "yum"
-	execCommand = func(name string, arg ...string) *exec.Cmd {
-		return exec.Command("echo", output)
-	}
-	os, pkgMngr := checkDistroPkgMngr()
-	require.Equal(t, expectedOs, os)
+	distro, pkgMngr := checkDistroPkgMngr(CentOSRelease)
+	require.Equal(t, expectedOs, distro)
 	require.Equal(t, expectedPkgMngr, pkgMngr)
 }
 
-func TestErrorDistroPkg(t *testing.T) {
-	defer func() { execCommand = orininalExecCommand }()
-	execCommand = func(name string, arg ...string) *exec.Cmd {
-		return exec.Command("false")
-	}
-	os, pkgMngr := checkDistroPkgMngr()
-	require.Equal(t, "", os)
+func TestBadDistroPkg(t *testing.T) {
+	distro, pkgMngr := checkDistroPkgMngr("")
+	require.Equal(t, "", distro)
 	require.Equal(t, "", pkgMngr)
 }
 
-func TestMacPkgMngr(t *testing.T) {
+func TestCheckPkgMngrTrue(t *testing.T) {
 	defer func() { execCommand = orininalExecCommand }()
 	output := "/usr/local/bin/brew"
 	execCommand = func(name string, arg ...string) *exec.Cmd {
 		return exec.Command("echo", output)
 	}
-	_, pkgMngr := checkMacPkgMngr()
-	require.Equal(t, "brew", pkgMngr)
+	result := checkPkgMngr("brew")
+	require.Equal(t, true, result)
 }
 
-func TestNoMacPkgMngr(t *testing.T) {
+func TestCheckPkgMngrFalse(t *testing.T) {
 	defer func() { execCommand = orininalExecCommand }()
 	execCommand = func(name string, arg ...string) *exec.Cmd {
 		return exec.Command("false")
 	}
-	_, pkgMngr := checkMacPkgMngr()
-	require.Equal(t, "", pkgMngr)
-}
-
-func TestSudoPerm(t *testing.T) {
-	defer func() { osGeteUid = originalOsGeteUid }()
-	osGeteUid = 0 // sudo permissions
-	expected := true
-
-	require.Equal(t, expected, checkSudoPerm())
-}
-
-func TestNoSudoPerm(t *testing.T) {
-	defer func() { osGeteUid = originalOsGeteUid }()
-	osGeteUid = 1000 // no sudo permissions
-	expected := false
-
-	require.Equal(t, expected, checkSudoPerm())
+	result := checkPkgMngr("brew")
+	require.Equal(t, false, result)
 }
