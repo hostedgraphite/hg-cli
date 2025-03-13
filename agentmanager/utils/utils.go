@@ -77,7 +77,7 @@ func streamOutput(pipe io.ReadCloser, updates chan<- string) {
 
 func ReadFile(filePath string) (string, error) {
 	var err error
-	cmd := exec.Command("sudo", "cat", filePath)
+	cmd := exec.Command("cat", filePath)
 	var out bytes.Buffer
 	cmd.Stdout = &out
 	cmd.Stderr = &out
@@ -89,7 +89,7 @@ func ReadFile(filePath string) (string, error) {
 }
 
 func WriteFile(filePath, updatedContent string) error {
-	writeCmd := exec.Command("sudo", "tee", filePath)
+	writeCmd := exec.Command("tee", filePath)
 	writeCmd.Stdin = bytes.NewBufferString(updatedContent)
 	var writeOut bytes.Buffer
 	writeCmd.Stdout = &writeOut
