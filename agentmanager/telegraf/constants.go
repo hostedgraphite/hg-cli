@@ -30,8 +30,8 @@ var ServiceDetails = map[string]map[string]map[string]string{
 		"brew": {
 			"configPath":  "/home/linuxbrew/.linuxbrew/etc/telegraf.conf",
 			"serviceCmd":  "telegraf",
-			"startHint":   "brew service telegraf start",
-			"restartHint": "brew service telegraf restart",
+			"startHint":   "brew services start telegraf",
+			"restartHint": "brew services restart telegraf",
 		},
 	},
 	"darwin": {
