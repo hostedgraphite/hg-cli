@@ -11,27 +11,41 @@ var DefaultTelegrafPlugins = []string{
 	"system",
 }
 
-var ServiceDetails = map[string]map[string]string{
+var ServiceDetails = map[string]map[string]map[string]string{
 	"windows": {
-		"configPath": "C:\\Program Files\\InfluxData\\telegraf\\telegraf.conf",
-		"serviceCmd": "C:\\Program Files\\InfluxData\\telegraf\\telegraf.exe",
-		"startCmd":   `& "C:\Program Files\InfluxData\telegraf\telegraf.exe" --service-name telegraf service start`,
-		"restartCmd": `& "C:\Program Files\InfluxData\telegraf\telegraf.exe" --service-name telegraf service stop (then start)`,
+		"default": {
+			"configPath":  "C:\\Program Files\\InfluxData\\telegraf\\telegraf.conf",
+			"serviceCmd":  "C:\\Program Files\\InfluxData\\telegraf\\telegraf.exe",
+			"startHint":   `& "C:\Program Files\InfluxData\telegraf\telegraf.exe" --service-name telegraf service start`,
+			"restartHint": `& "C:\Program Files\InfluxData\telegraf\telegraf.exe" --service-name telegraf service stop (then start)`,
+		},
 	},
 	"linux": {
-		"configPath": "/etc/telegraf/telegraf.conf",
-		"confDir":    "/etc/telegraf",
-		"serviceCmd": "/usr/bin/telegraf",
-		"startCmd":   "sudo service telegraf start",
-		"restartCmd": "sudo service telegraf restart",
+		"default": {
+			"configPath":  "/etc/telegraf/telegraf.conf",
+			"serviceCmd":  "telegraf",
+			"startHint":   "sudo service telegraf start",
+			"restartHint": "sudo service telegraf restart",
+		},
+		"brew": {
+			"configPath":  "/home/linuxbrew/.linuxbrew/etc/telegraf.conf",
+			"serviceCmd":  "telegraf",
+			"startHint":   "brew service telegraf start",
+			"restartHint": "brew service telegraf restart",
+		},
 	},
 	"darwin": {
-		"configPathAmd": "/usr/local/etc/telegraf.conf",
-		"configDirAmd":  "/usr/local/etc",
-		"configPathArm": "/opt/homebrew/etc/telegraf.conf",
-		"confDirArm":    "/opt/homebrew/etc",
-		"startCmd":      "brew services start telegraf",
-		"serviceCmd":    "telegraf",
-		"restartCmd":    "brew services restart telegraf",
+		"amd64": {
+			"configPath":  "/usr/local/etc/telegraf.conf",
+			"serviceCmd":  "telegraf",
+			"startHint":   "brew services start telegraf",
+			"restartHint": "brew services restart telegraf",
+		},
+		"arm64": {
+			"configPath":  "/opt/homebrew/etc/telegraf.conf",
+			"serviceCmd":  "telegraf",
+			"startHint":   "brew services start telegraf",
+			"restartHint": "brew services restart telegraf",
+		},
 	},
 }

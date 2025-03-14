@@ -24,6 +24,7 @@ func (t *Telegraf) Install(apikey string, sysinfo sysinfo.SysInfo, options map[s
 	t.updates = updates
 
 	var err error
+	serviceSettings := GetServiceSettings(t.sysinfo.Os, t.sysinfo.Arch, t.sysinfo.PkgMngr)
 
 	t.updates <- "Installing Telegraf Agent"
 	err = installers.TelegrafAgentInstall(t.sysinfo, t.updates)
@@ -37,8 +38,8 @@ func (t *Telegraf) Install(apikey string, sysinfo sysinfo.SysInfo, options map[s
 
 	time.Sleep(1 * time.Second)
 
-	configPath := GetConfigPath(t.sysinfo.Os, t.sysinfo.Arch)
-	telegrafCmd := ServiceDetails[t.sysinfo.Os]["serviceCmd"]
+	configPath := serviceSettings["configPath"]
+	telegrafCmd := serviceSettings["serviceCmd"]
 
 	updates <- "Configuring Telegraf Plugins"
 	err = installers.TelegrafPluginInstall(configPath, telegrafCmd, plugins, t.sysinfo, t.updates)
