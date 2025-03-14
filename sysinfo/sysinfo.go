@@ -88,18 +88,15 @@ func GetSystemInformation() (SysInfo, error) {
 		releaseInfo, err := getOSRelease()
 		if err == nil {
 			distro, pkgmngr = checkDistroPkgMngr(releaseInfo)
-
-			// Check if hg-cli was installed with brew, this bypasses the need
-			// for sudo permissions
-			brewInstalled := checkHgCliBrewInstall()
-			if brewInstalled {
-				pkgmngr = "brew"
-			} else {
-				sudoPerm = checkSudoPerm()
-			}
+			sudoPerm = checkSudoPerm()
 		}
 	case "windows":
 		sudoPerm = checkSudoPermWindows()
+	}
+
+	// If hg-cli was installed with brew, set the package manager to brew
+	if checkHgCliBrewInstall() {
+		pkgmngr = "brew"
 	}
 
 	// Confirm that the package manager is installed

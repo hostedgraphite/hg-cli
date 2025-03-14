@@ -33,7 +33,7 @@ func InstallCmd(sysinfo sysinfo.SysInfo) *cobra.Command {
 		SilenceErrors: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			// Validate if the cmd requires sudo
-			if cliUtils.ActionRequiresSudo(sysinfo.Os, "install") && !sysinfo.SudoPerm {
+			if cliUtils.ActionRequiresSudo(sysinfo.Os, "install", sysinfo.PkgMngr) && !sysinfo.SudoPerm {
 				return fmt.Errorf("this cmd requires admin privileges, please run as root")
 			}
 

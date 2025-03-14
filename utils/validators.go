@@ -25,7 +25,10 @@ func ValidateAPIKey(apikey string) error {
 	return nil
 }
 
-func ActionRequiresSudo(os string, action string) bool {
+func ActionRequiresSudo(os, action, pkgmngr string) bool {
+	if pkgmngr == "brew" {
+		return false
+	}
 	action = strings.ToLower(action)
 	needSudo := true
 	sudoActions := []string{"install", "uninstall", "update"}
