@@ -8,10 +8,11 @@ import (
 
 func TelegrafAgentInstallDarwin(pkgMngr, arch string, updates chan<- string) error {
 	var err error
-	if pkgMngr == "" {
-		err = MacBinInstall(arch, updates)
+
+	if pkgMngr == "brew" {
+		err = BrewInstall(updates)
 	} else {
-		err = MacBrewInstall(updates)
+		err = MacBinInstall(arch, updates)
 	}
 	return err
 }
