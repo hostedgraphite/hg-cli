@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/hostedgraphite/hg-cli/agentmanager"
-	"github.com/hostedgraphite/hg-cli/agentmanager/telegraf"
 	"github.com/hostedgraphite/hg-cli/formatters"
 	"github.com/hostedgraphite/hg-cli/styles"
 	"github.com/hostedgraphite/hg-cli/sysinfo"
@@ -27,19 +26,21 @@ func (u updateMsg) awaitNext() updateMsg {
 }
 
 type AgentRunner struct {
-	agent         string
-	action        string
-	options       map[string]interface{}
-	sysInfo       sysinfo.SysInfo
-	currentUpdate string
+	agent           string
+	action          string
+	options         map[string]interface{}
+	sysInfo         sysinfo.SysInfo
+	currentUpdate   string
+	serviceSettings map[string]string
 }
 
-func NewAgentRunner(agent, action string, options map[string]interface{}, sysInfo sysinfo.SysInfo) *AgentRunner {
+func NewAgentRunner(agent, action string, options map[string]interface{}, sysInfo sysinfo.SysInfo, serviceSettings map[string]string) *AgentRunner {
 	return &AgentRunner{
-		agent:   agent,
-		action:  action,
-		options: options,
-		sysInfo: sysInfo,
+		agent:           agent,
+		action:          action,
+		options:         options,
+		sysInfo:         sysInfo,
+		serviceSettings: serviceSettings,
 	}
 }
 
@@ -115,16 +116,16 @@ func (a *AgentRunner) View() string {
 				Success:  true,
 				Action:   a.action,
 				Plugins:  a.options["plugins"].([]string),
-				Config:   telegraf.GetConfigPath(a.sysInfo.Os, a.sysInfo.Arch),
-				StartCmd: telegraf.ServiceDetails[a.sysInfo.Os]["startCmd"],
+				Config:   a.serviceSettings["configPath"],
+				StartCmd: a.serviceSettings["startHint"],
 			}
 		} else if a.action == "Update Api Key" {
 			summary = formatters.ActionSummary{
 				Agent:      a.agent,
 				Success:    true,
 				Action:     a.action,
-				Config:     telegraf.GetConfigPath(a.sysInfo.Os, a.sysInfo.Arch),
-				RestartCmd: telegraf.ServiceDetails[a.sysInfo.Os]["restartCmd"],
+				Config:     a.options["config"].(string),
+				RestartCmd: a.serviceSettings["restartHint"],
 			}
 		} else {
 			// Uninstall

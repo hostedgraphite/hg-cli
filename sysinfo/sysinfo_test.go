@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-var orininalExecCommand = execCommand
+var originalExecCommand = execCommand
 
 const UbunutRelease = `
 NAME="Ubuntu"
@@ -90,7 +90,7 @@ func TestBadDistroPkg(t *testing.T) {
 }
 
 func TestCheckPkgMngrTrue(t *testing.T) {
-	defer func() { execCommand = orininalExecCommand }()
+	defer func() { execCommand = originalExecCommand }()
 	output := "/usr/local/bin/brew"
 	execCommand = func(name string, arg ...string) *exec.Cmd {
 		return exec.Command("echo", output)
@@ -100,10 +100,24 @@ func TestCheckPkgMngrTrue(t *testing.T) {
 }
 
 func TestCheckPkgMngrFalse(t *testing.T) {
-	defer func() { execCommand = orininalExecCommand }()
+	defer func() { execCommand = originalExecCommand }()
 	execCommand = func(name string, arg ...string) *exec.Cmd {
 		return exec.Command("false")
 	}
 	result := checkPkgMngr("brew")
 	require.Equal(t, false, result)
+}
+
+func TestCheckBrewOnLinux(t *testing.T) {
+	defer func() { execCommand = originalExecCommand }()
+
+	execCommand = func(name string, arg ...string) *exec.Cmd {
+		return exec.Command("sh", "-c", "echo 'Error: No such keg: ...' >&2; exit 1")
+	}
+	require.False(t, checkHgCliBrewInstall())
+
+	execCommand = func(name string, arg ...string) *exec.Cmd {
+		return exec.Command("echo", "hg-cli")
+	}
+	require.True(t, checkHgCliBrewInstall())
 }

@@ -4,30 +4,17 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-
-	"github.com/hostedgraphite/hg-cli/agentmanager/utils"
 )
 
 func DarwinUninstall(pkgMngr, arch string, updates chan<- string) error {
 	var err error
 
 	if pkgMngr == "brew" {
-		err = brewUninstall(updates)
+		err = BrewUninstall(updates)
 	} else {
 		err = manualUninstall(updates)
 	}
 	return err
-}
-
-func brewUninstall(updates chan<- string) error {
-	var err error
-	err = utils.RunCommand("brew", []string{"uninstall", "telegraf"}, updates)
-	if err != nil {
-		return fmt.Errorf("error uninstalling telegraf service: %v", err)
-	}
-
-	return err
-
 }
 
 func manualUninstall(updates chan<- string) error {

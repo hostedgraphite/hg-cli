@@ -16,7 +16,9 @@ var linuxArchFile = map[string]string{
 func TelegrafAgentInstallLinux(operatingSystem, arch, distro, pkgMngr string, updates chan<- string) error {
 	var err error
 
-	if distro == "ubuntu" || distro == "debian" && pkgMngr != "" {
+	if pkgMngr == "brew" {
+		err = BrewInstall(updates)
+	} else if distro == "ubuntu" || distro == "debian" && pkgMngr != "" {
 		err = UbuntuDebInstall(updates)
 	} else if (distro == "redhat" || distro == "centos" || distro == "rhel" || distro == "fedora") && pkgMngr != "" {
 		err = CentOsRhelInstall(updates)

@@ -75,6 +75,7 @@ func execute(apikey, agentName, path string, sysinfo sysinfo.SysInfo) error {
 	options := map[string]interface{}{
 		"config": path,
 	}
+	serviceSettings := telegraf.GetServiceSettings(sysinfo.Os, sysinfo.Arch, sysinfo.PkgMngr)
 
 	go func() {
 		defer close(updates)
@@ -103,7 +104,7 @@ func execute(apikey, agentName, path string, sysinfo sysinfo.SysInfo) error {
 		Success:    true,
 		Action:     "Update Api Key",
 		Config:     path,
-		RestartCmd: telegraf.ServiceDetails[sysinfo.Os]["restartCmd"],
+		RestartCmd: serviceSettings["restartHint"],
 	}
 
 	fmt.Println(formatters.GenerateCliSummary(summary))

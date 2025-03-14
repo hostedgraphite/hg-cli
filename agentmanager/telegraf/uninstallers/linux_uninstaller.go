@@ -9,7 +9,9 @@ import (
 func LinuxUninstall(operatingSystem, arch, distro, pkgMngr string, updates chan<- string) error {
 	var err error
 
-	if pkgMngr == "" || (distro != "ubuntu" && distro != "debian" && distro != "redhat" && distro != "centos" && distro != "rhel" && distro != "fedora") {
+	if pkgMngr == "brew" {
+		err = BrewUninstall(updates)
+	} else if pkgMngr == "" || (distro != "ubuntu" && distro != "debian" && distro != "redhat" && distro != "centos" && distro != "rhel" && distro != "fedora") {
 		err = LinuxUninstaller(updates)
 	} else {
 		err = LinuxPkgMngrUninstaller(pkgMngr, updates)

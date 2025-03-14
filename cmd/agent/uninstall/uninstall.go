@@ -23,7 +23,7 @@ func UninstallCmd(sysinfo sysinfo.SysInfo) *cobra.Command {
 		Long:  "Uninstall a monitoring agent.",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			// Validate if the cmd requires sudo
-			if cliUtils.ActionRequiresSudo(sysinfo.Os, "uninstall") && !sysinfo.SudoPerm {
+			if cliUtils.ActionRequiresSudo(sysinfo.Os, "uninstall", sysinfo.PkgMngr) && !sysinfo.SudoPerm {
 				return fmt.Errorf("this cmd requires admin privileges, please run as root")
 			}
 

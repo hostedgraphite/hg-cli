@@ -5,32 +5,31 @@ import (
 	"os"
 )
 
-func GetConfigPath(os, arch string) string {
-	var path string
+func GetServiceSettings(os, arch, pkgmngr string) map[string]string {
+	var settings map[string]string
 
 	switch os {
 	case "windows":
-		path = ServiceDetails[os]["configPath"]
+		settings = ServiceDetails[os]["default"]
 	case "linux":
-		path = ServiceDetails[os]["configPath"]
+		if pkgmngr == "brew" {
+			settings = ServiceDetails[os][pkgmngr]
+		} else {
+			settings = ServiceDetails[os]["default"]
+		}
 	case "darwin":
 		switch arch {
 		case "amd64":
-			path = ServiceDetails[os]["configPathAmd"]
+			settings = ServiceDetails[os][arch]
 		default:
-			path = ServiceDetails[os]["configPathArm"]
+			settings = ServiceDetails[os][arch]
 		}
 	}
 
-	return path
+	return settings
 }
 
-func ValidateFilePath(filePath, osys, arch string, tui bool) error {
-
-	if tui && filePath == "" {
-		filePath = GetConfigPath(osys, arch)
-	}
-
+func ValidateFilePath(filePath string) error {
 	info, err := os.Stat(filePath)
 	if err != nil {
 		return fmt.Errorf("error verifying path: %v", err)

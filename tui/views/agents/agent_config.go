@@ -20,8 +20,8 @@ type AgentConfigView struct {
 	action          string
 	apiKey          string
 	selectedPlugins []string
-	// agentPayload types.AgentAction
-	sysInfo sysinfo.SysInfo
+	sysInfo         sysinfo.SysInfo
+	serviceSettings map[string]string
 }
 
 func NewAgentConfigView(agent, action string, sysInfo sysinfo.SysInfo) *AgentConfigView {
@@ -29,12 +29,13 @@ func NewAgentConfigView(agent, action string, sysInfo sysinfo.SysInfo) *AgentCon
 	var apikey, selectedInstall, path string
 	var selectedPlugins []string
 	var confirmUninstall bool
+	settings := telegraf.GetServiceSettings(sysInfo.Os, sysInfo.Arch, sysInfo.PkgMngr)
 
 	header := getHeader(agent)
 	if action == "Install" {
 		actionGroup = installGroup(header, agent, apikey, selectedInstall, selectedPlugins)
 	} else if action == "Update Api Key" {
-		actionGroup = updateAPIKeyGroup(header, apikey, path, sysInfo.Os, sysInfo.Arch)
+		actionGroup = updateAPIKeyGroup(header, apikey, path, settings["configPath"])
 	} else if action == "Uninstall" {
 		actionGroup = uninstallGroup(header, confirmUninstall)
 	}
@@ -46,11 +47,12 @@ func NewAgentConfigView(agent, action string, sysInfo sysinfo.SysInfo) *AgentCon
 		WithKeyMap(styles.CustomKeyMap())
 
 	return &AgentConfigView{
-		form:    form,
-		agent:   agent,
-		action:  action,
-		apiKey:  apikey,
-		sysInfo: sysInfo,
+		form:            form,
+		agent:           agent,
+		action:          action,
+		apiKey:          apikey,
+		sysInfo:         sysInfo,
+		serviceSettings: settings,
 	}
 }
 func (a *AgentConfigView) Init() tea.Cmd {
@@ -113,7 +115,7 @@ func (a *AgentConfigView) Update(msg tea.Msg) (types.View, tea.Cmd) {
 			// Update agent
 			path := a.form.GetString("path")
 			if path == "" {
-				path = telegraf.GetConfigPath(a.sysInfo.Os, a.sysInfo.Arch)
+				path = a.serviceSettings["configPath"]
 			}
 			options["config"] = path
 		case "Uninstall":
@@ -122,7 +124,7 @@ func (a *AgentConfigView) Update(msg tea.Msg) (types.View, tea.Cmd) {
 			}
 		}
 
-		agentRunner := NewAgentRunner(a.agent, a.action, options, a.sysInfo)
+		agentRunner := NewAgentRunner(a.agent, a.action, options, a.sysInfo, a.serviceSettings)
 		return agentRunner, agentRunner.Init()
 	}
 
@@ -209,9 +211,7 @@ func installGroup(header, agent, apikey, selectedInstall string, selectedPlugins
 	return actionGroup
 }
 
-func updateAPIKeyGroup(header, apikey, path, operatingSytem, arch string) *huh.Group {
-	defaultDir := telegraf.GetConfigPath(operatingSytem, arch)
-
+func updateAPIKeyGroup(header, apikey, path, defaultPath string) *huh.Group {
 	actionGroup := huh.NewGroup(
 		huh.NewNote().
 			Title(header),
@@ -235,9 +235,9 @@ func updateAPIKeyGroup(header, apikey, path, operatingSytem, arch string) *huh.G
 			Key("path").
 			Prompt("Path: ").
 			Description("The default location is already populated. If the path is different please update below.").
-			Placeholder(defaultDir).
+			Placeholder(defaultPath).
 			Validate(func(s string) error {
-				err := telegraf.ValidateFilePath(s, operatingSytem, arch, true)
+				err := telegraf.ValidateFilePath(s)
 				if err != nil {
 					return err
 				}
