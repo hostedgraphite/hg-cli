@@ -1,6 +1,7 @@
 package pipeline
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 	"time"
@@ -14,6 +15,21 @@ type Pipe struct {
 	Duration time.Duration
 	Executed bool
 	Success  bool
+
+	ctx     context.Context
+	postRun func(context.Context) error
+}
+
+func (p *Pipe) execPostRun() error {
+	if p.OutErr != nil || p.postRun == nil {
+		return p.OutErr
+	}
+
+	p.ctx = context.WithValue(p.ctx, "output", p.Output)
+	p.ctx = context.WithValue(p.ctx, "err", p.OutErr)
+
+	err := p.postRun(p.ctx)
+	return err
 }
 
 func NewPipe(name string, cmd *exec.Cmd) *Pipe {
@@ -23,6 +39,16 @@ func NewPipe(name string, cmd *exec.Cmd) *Pipe {
 	}
 }
 
+func (p *Pipe) Context(ctx context.Context) *Pipe {
+	p.ctx = ctx
+	return p
+}
+
+func (p *Pipe) PostRun(postRun func(context.Context) error) *Pipe {
+	p.postRun = postRun
+	return p
+}
+
 func (p *Pipe) Run() (string, error) {
 	startTime := time.Now()
 	output, err := p.Cmd.Output()
@@ -30,6 +56,7 @@ func (p *Pipe) Run() (string, error) {
 	p.Executed = true
 	p.Success = err == nil
 	p.OutErr = err
+	p.OutErr = p.execPostRun()
 	p.Duration = time.Duration(time.Since(startTime).Milliseconds())
 	return p.Output, p.OutErr
 }
