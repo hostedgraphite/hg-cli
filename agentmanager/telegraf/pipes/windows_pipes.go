@@ -1,6 +1,7 @@
 package pipes
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -55,10 +56,13 @@ func WindowsConfigPipes(options map[string]interface{}, serviceSettings map[stri
 	configpath := serviceSettings["configPath"]
 
 	pipes := []*pipeline.Pipe{
-		{
-			Name: "Configuring Telegraf Plugins",
-			Cmd:  exec.Command("powershell", "-Command", fmt.Sprintf("& '%s' --input-filter %s --output-filter graphite config > %s", telegrafCmd, inputs, configpath)),
-		},
+		pipeline.NewPipe("Configuring Telegraf Plugins", exec.Command("powershell", "-Command", fmt.Sprintf("& '%s' --input-filter %s --output-filter graphite config", telegrafCmd, inputs))).PostRun(
+			func(ctx context.Context) error {
+				output := ctx.Value("output").(string)
+				err := os.WriteFile(configpath, []byte(output), 0644)
+				return err
+			},
+		),
 	}
 
 	return pipes

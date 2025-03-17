@@ -56,9 +56,9 @@ func (p *Pipe) Run() (string, error) {
 	output, err := p.Cmd.Output()
 	p.Output = string(output)
 	p.Executed = true
-	p.Success = err == nil
 	p.OutErr = err
 	p.OutErr = p.execPostRun()
+	p.Success = p.OutErr == nil
 	p.Duration = time.Duration(time.Since(startTime).Milliseconds())
 	return p.Output, p.OutErr
 }

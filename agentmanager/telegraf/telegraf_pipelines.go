@@ -65,8 +65,17 @@ func (t *Telegraf) configPipeline() ([]*pipeline.Pipe, error) {
 }
 
 func (t *Telegraf) graphiteOutputUpdatePipe() []*pipeline.Pipe {
+	os := t.sysinfo.Os
+	var cmd *exec.Cmd
+
+	if os == "windows" {
+		cmd = exec.Command("powershell", "-Command", "echo test")
+	} else {
+		cmd = exec.Command("sleep", "1")
+	}
+
 	pipes := []*pipeline.Pipe{
-		pipeline.NewPipe("Updating Telegraf Graphite Output Config", exec.Command("sleep", "0.2s")).PostRun(
+		pipeline.NewPipe("Updating Telegraf Graphite Output Config", cmd).PostRun(
 			func(ctx context.Context) error {
 				return graphiteOutputUpdate(t.apikey, t.serviceSettings["configPath"])
 			},
