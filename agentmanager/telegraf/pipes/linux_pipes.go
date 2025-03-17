@@ -20,7 +20,7 @@ func LinuxInstallPipes(sysInfo sysinfo.SysInfo) []*pipeline.Pipe {
 		pipes = BrewInstallPipes()
 	} else if pkgMngr == "apt" {
 		pipes = aptInstallPipes()
-	} else if pkgMngr == "yum" {
+	} else if pkgMngr == "yum" || pkgMngr == "dnf" {
 		pipes = yumInstallPipes()
 	} else {
 		pipes = linuxBinInstallPipes(arch, distro)
