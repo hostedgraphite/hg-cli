@@ -2,6 +2,7 @@ package install
 
 import (
 	//  "fmt"
+
 	"context"
 	"fmt"
 
@@ -19,11 +20,10 @@ import (
 
 func InstallCmd(sysinfo sysinfo.SysInfo) *cobra.Command {
 	var (
-		completed   bool
-		installType string
-		apikey      string
-		agentName   string
-		plugins     []string
+		completed bool
+		apikey    string
+		agentName string
+		plugins   []string
 	)
 
 	cmd := &cobra.Command{
@@ -43,7 +43,7 @@ func InstallCmd(sysinfo sysinfo.SysInfo) *cobra.Command {
 				return nil
 			}
 
-			err := validateArgs(args, plugins, installType)
+			err := validateArgs(args, plugins)
 			if err != nil {
 				return err
 			}
@@ -54,7 +54,6 @@ func InstallCmd(sysinfo sysinfo.SysInfo) *cobra.Command {
 			// Kind of wierd but, if the flags are marked required outisde of the PreRunE
 			// the requiremet error will also populate when the --list flag is added.
 			cmd.MarkFlagRequired("apikey")
-			cmd.MarkFlagRequired("install")
 
 			return nil
 		},
@@ -63,7 +62,7 @@ func InstallCmd(sysinfo sysinfo.SysInfo) *cobra.Command {
 				return nil
 			}
 
-			err := execute(apikey, installType, agentName, plugins, sysinfo)
+			err := execute(apikey, agentName, plugins, sysinfo)
 
 			if err != nil {
 				return err
@@ -73,33 +72,22 @@ func InstallCmd(sysinfo sysinfo.SysInfo) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&installType, "install", "", "The installation type (custom, default)")
-	cmd.Flags().StringVar(&apikey, "apikey", "", "Your Hosted Graphite API key (required)")
+	cmd.Flags().StringVar(&apikey, "api-key", "", "Your Hosted Graphite API key (required)")
 	cmd.Flags().StringSliceVar(&plugins, "plugins", []string{}, "The plugins to install")
 
 	return cmd
 }
 
-func validateArgs(args, plugins []string, installType string) error {
+func validateArgs(args, plugins []string) error {
 
 	if len(args) == 0 || !utils.ValidateAgent(args[0]) {
 		return fmt.Errorf("no agent specified or agent not supported; see 'cli agent -l' for compatible agents")
 	}
 
-	if installType != "custom" && installType != "default" {
-		return fmt.Errorf("the install type is not supported. Please select either custom or default")
-	}
-
-	if installType == "custom" {
-		if len(plugins) == 0 {
-			return fmt.Errorf("no plugins added, must include at least 1 plugin")
-		}
-	}
-
 	return nil
 }
 
-func execute(apikey, installType, agentName string, plugins []string, sysinfo sysinfo.SysInfo) error {
+func execute(apikey, agentName string, plugins []string, sysinfo sysinfo.SysInfo) error {
 	var err error
 	var selectedPlugins []string
 
@@ -108,7 +96,7 @@ func execute(apikey, installType, agentName string, plugins []string, sysinfo sy
 	agent := agentmanager.GetAgent(agentName)
 	updates := make(chan string)
 
-	if installType == "default" {
+	if len(plugins) == 0 {
 		selectedPlugins = telegraf.DefaultTelegrafPlugins
 	} else {
 		selectedPlugins = plugins
