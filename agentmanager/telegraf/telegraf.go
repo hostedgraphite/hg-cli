@@ -11,10 +11,21 @@ import (
 )
 
 type Telegraf struct {
-	apikey  string
-	sysinfo sysinfo.SysInfo
-	options map[string]interface{}
-	updates chan<- string
+	apikey          string
+	sysinfo         sysinfo.SysInfo
+	options         map[string]interface{}
+	serviceSettings map[string]string
+	updates         chan<- string
+}
+
+func NewTelegrafAgent(options map[string]interface{}, sysInfo sysinfo.SysInfo) *Telegraf {
+	agent := &Telegraf{
+		apikey:          options["apikey"].(string),
+		sysinfo:         sysInfo,
+		options:         options,
+		serviceSettings: GetServiceSettings(sysInfo.Os, sysInfo.Arch, sysInfo.PkgMngr),
+	}
+	return agent
 }
 
 func (t *Telegraf) Install(apikey string, sysinfo sysinfo.SysInfo, options map[string]interface{}, updates chan<- string) error {
