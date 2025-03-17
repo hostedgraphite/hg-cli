@@ -25,6 +25,12 @@ func checkSudoPerm() bool {
 	return os.Getegid() == 0
 }
 
+func checkHgCliBrewInstall() bool {
+	cmd := execCommand("brew", "list", "--formula", "hg-cli")
+	err := cmd.Run()
+	return err == nil
+}
+
 func checkSudoPermWindows() bool {
 	cmd := execCommand("net", "session")
 	err := cmd.Run()
@@ -86,6 +92,11 @@ func GetSystemInformation() (SysInfo, error) {
 		}
 	case "windows":
 		sudoPerm = checkSudoPermWindows()
+	}
+
+	// If hg-cli was installed with brew, set the package manager to brew
+	if checkHgCliBrewInstall() {
+		pkgmngr = "brew"
 	}
 
 	// Confirm that the package manager is installed

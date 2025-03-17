@@ -33,7 +33,7 @@ func InstallCmd(sysinfo sysinfo.SysInfo) *cobra.Command {
 		SilenceErrors: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
 			// Validate if the cmd requires sudo
-			if cliUtils.ActionRequiresSudo(sysinfo.Os, "install") && !sysinfo.SudoPerm {
+			if cliUtils.ActionRequiresSudo(sysinfo.Os, "install", sysinfo.PkgMngr) && !sysinfo.SudoPerm {
 				return fmt.Errorf("this cmd requires admin privileges, please run as root")
 			}
 
@@ -103,6 +103,8 @@ func execute(apikey, installType, agentName string, plugins []string, sysinfo sy
 	var err error
 	var selectedPlugins []string
 
+	serviceSettings := telegraf.GetServiceSettings(sysinfo.Os, sysinfo.Arch, sysinfo.PkgMngr)
+
 	agent := agentmanager.GetAgent(agentName)
 	updates := make(chan string)
 
@@ -151,8 +153,8 @@ func execute(apikey, installType, agentName string, plugins []string, sysinfo sy
 		Success:  true,
 		Action:   "Install",
 		Plugins:  selectedPlugins,
-		Config:   telegraf.GetConfigPath(sysinfo.Os, sysinfo.Arch),
-		StartCmd: telegraf.ServiceDetails[sysinfo.Os]["startCmd"],
+		Config:   serviceSettings["configPath"],
+		StartCmd: serviceSettings["startHint"],
 		Error:    "",
 	}
 
