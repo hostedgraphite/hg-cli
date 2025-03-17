@@ -46,8 +46,5 @@ func TestPipelineRun(t *testing.T) {
 	t.Log("Pipeline Full Output")
 	t.Logf("Full Pipeline Output: \n%s", strings.Join(pipeline.OutputLog, ""))
 
-	t.Log("Pipeline Full Error")
-	t.Logf("Full Pipeline Error: \n%s", strings.Join(pipeline.ErrLog, ""))
-
 	require.NoError(t, err)
 }
