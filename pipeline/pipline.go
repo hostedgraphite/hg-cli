@@ -73,9 +73,10 @@ type Pipeline struct {
 	Name      string
 	Pipes     []*Pipe
 	Running   chan<- *Pipe
+	Curr      *Pipe
 	LastRun   *Pipe
 	OutputLog []string
-	ErrLog    []string
+	Err       error
 
 	executed  bool
 	isRunning bool
@@ -94,16 +95,18 @@ func (p *Pipeline) Run() error {
 
 	for _, pipe := range p.Pipes {
 		p.Running <- pipe
+		p.Curr = pipe
 		output, err = pipe.Run()
 		p.LastRun = pipe
 
 		p.OutputLog = append(p.OutputLog, output)
 		if err != nil {
 			p.failed = true
-			p.ErrLog = append(p.ErrLog, err.Error())
+			p.Err = err
 			break
 		}
 	}
+	p.Curr = nil
 	p.isRunning = false
 	p.completed = true
 	return err

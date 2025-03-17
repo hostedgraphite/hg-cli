@@ -9,10 +9,16 @@ import (
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 )
 
 var logger = log.New(os.Stdout)
+
+var (
+	checkMark = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).SetString("✓")
+	crossMark = lipgloss.NewStyle().Foreground(lipgloss.Color("9")).SetString("✗")
+)
 
 // Starts the Provided Pipeline in a go routine and returns a context that will be cancelled after 240 seconds
 func PipelineRunner(pipeline *Pipeline) context.Context {
@@ -27,12 +33,15 @@ func PipelineRunner(pipeline *Pipeline) context.Context {
 }
 
 func NewRunner(pipeline *Pipeline, daemonize bool, updates chan *Pipe) *runner {
+	spin := spinner.New()
+	spin.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).PaddingRight(1)
+
 	r := &runner{
 		Pipeline:  pipeline,
 		Daemonize: daemonize,
 		Updates:   updates,
 
-		spinner: spinner.New(),
+		spinner: spin,
 	}
 	return r
 }
@@ -92,13 +101,18 @@ func (r *runner) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (r *runner) View() string {
-	s := "\n" + r.spinner.View() + fmt.Sprintf(" Executing Job: %s", r.Pipeline.Name)
+	s := "\n" + r.spinner.View() + fmt.Sprintf(r.Pipeline.Name)
 	s += "\n\n"
 
 	for _, pipe := range r.Pipeline.Pipes {
-		s += pipe.Name
 		if pipe.Executed {
-			s += fmt.Sprintf(" finished in %dms", time.Duration(pipe.Duration))
+			if pipe.Success {
+				s += checkMark.Render("") + pipe.Name + fmt.Sprintf(" | finished in %dms", time.Duration(pipe.Duration))
+			} else {
+				s += crossMark.Render("") + pipe.Name + fmt.Sprintf(" | failed after %dms", time.Duration(pipe.Duration))
+			}
+		} else if pipe == r.Pipeline.Curr {
+			s += r.spinner.View() + pipe.Name
 		}
 		s += "\n"
 	}
@@ -116,6 +130,17 @@ func (r *runner) Run() error {
 	}
 
 	_, err := tea.NewProgram(r, opts...).Run()
+	if err != nil {
+		fmt.Printf("Runner Failed")
+		return err
+	}
+
+	if r.Pipeline.failed {
+		fmt.Printf("\n\nFailed '%s' on cmd '%s'\n", r.Pipeline.Name, r.Pipeline.LastRun.Name)
+		fmt.Printf("Error: %s\n", r.Pipeline.Err)
+		return r.Pipeline.Err
+	}
+
 	fmt.Printf("\n%s Completed\n", r.Pipeline.Name)
 	return err
 }
