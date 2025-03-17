@@ -25,8 +25,10 @@ func (p *Pipe) execPostRun() error {
 		return p.OutErr
 	}
 
+	if p.ctx == nil {
+		p.ctx = context.Background()
+	}
 	p.ctx = context.WithValue(p.ctx, "output", p.Output)
-	p.ctx = context.WithValue(p.ctx, "err", p.OutErr)
 
 	err := p.postRun(p.ctx)
 	return err
