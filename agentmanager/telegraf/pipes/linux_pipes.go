@@ -145,6 +145,10 @@ func linuxBinInstallPipes(arch, distro string) []*pipeline.Pipe {
 			Cmd:  exec.Command("tar", "xf", tmpPath, "-C", tmpDir),
 		},
 		{
+			Name: "Creating Telegraf Config Directory",
+			Cmd:  exec.Command("mkdir", "-p", "/etc/telegraf"),
+		},
+		{
 			Name: "Moving Telegraf Conf File",
 			Cmd:  exec.Command("mv", telegrafConf, "/etc/telegraf/"),
 		},
