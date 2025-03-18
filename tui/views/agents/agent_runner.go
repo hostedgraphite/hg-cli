@@ -6,10 +6,12 @@ import (
 
 	"github.com/hostedgraphite/hg-cli/agentmanager"
 	"github.com/hostedgraphite/hg-cli/formatters"
+	"github.com/hostedgraphite/hg-cli/pipeline"
 	"github.com/hostedgraphite/hg-cli/styles"
 	"github.com/hostedgraphite/hg-cli/sysinfo"
 	"github.com/hostedgraphite/hg-cli/tui/types"
 
+	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -32,6 +34,7 @@ type AgentRunner struct {
 	sysInfo         sysinfo.SysInfo
 	currentUpdate   string
 	serviceSettings map[string]string
+	runner          *pipeline.Runner
 }
 
 func NewAgentRunner(agent, action string, options map[string]interface{}, sysInfo sysinfo.SysInfo, serviceSettings map[string]string) *AgentRunner {
@@ -51,10 +54,19 @@ func (a *AgentRunner) Init() tea.Cmd {
 	apikey := a.options["apikey"].(string)
 	switch a.action {
 	case "Install":
-		go func() {
-			time.Sleep(2 * time.Second)
-			agent.Install(apikey, a.sysInfo, a.options, updates)
-		}()
+		agent = agentmanager.NewAgent(a.agent, a.options, a.sysInfo)
+		updates := make(chan *pipeline.Pipe)
+		installPipeline, err := agent.InstallPipeline(updates)
+		if err != nil {
+			panic(err) // This BAD. TODO: not this
+		}
+		runner := pipeline.NewRunner(
+			installPipeline,
+			false,
+			updates,
+		)
+		a.runner = runner
+		return a.runner.RunStatic()
 	case "Update Api Key":
 		go func() {
 			time.Sleep(2 * time.Second)
@@ -88,6 +100,14 @@ func (a *AgentRunner) Update(msg tea.Msg) (types.View, tea.Cmd) {
 			return a, tea.Quit
 		case "enter":
 		}
+	case pipeline.PipeUpdate:
+		var cmd tea.Cmd
+		_, cmd = a.runner.Update(msg)
+		cmds = append(cmds, cmd)
+	case spinner.TickMsg:
+		var cmd tea.Cmd
+		_, cmd = a.runner.Update(msg)
+		cmds = append(cmds, cmd)
 	case updateMsg:
 		a.currentUpdate = msg.current
 		if strings.HasPrefix(a.currentUpdate, "Error") {
@@ -108,6 +128,29 @@ func (a *AgentRunner) Update(msg tea.Msg) (types.View, tea.Cmd) {
 func (a *AgentRunner) View() string {
 	var summary formatters.ActionSummary
 	var generatedSummary string
+
+	if a.runner != nil {
+		if a.runner.Pipeline.IsCompleted() {
+			summary = formatters.ActionSummary{
+				Agent:    a.agent,
+				Success:  a.runner.Pipeline.Success(),
+				Action:   a.action,
+				Plugins:  a.options["plugins"].([]string),
+				Config:   a.serviceSettings["configPath"],
+				StartCmd: a.serviceSettings["startHint"],
+			}
+			return formatters.GenerateSummary(summary, a.sysInfo.Width, a.sysInfo.Height)
+		} else {
+			s := styles.DefaultStyles()
+			content := a.runner.View()
+			content = s.Runner.Render(content)
+			return styles.PlaceContent(
+				a.sysInfo.Width,
+				a.sysInfo.Height,
+				content,
+			)
+		}
+	}
 
 	if strings.HasPrefix(a.currentUpdate, "Completed") {
 		if a.action == "Install" {
