@@ -36,7 +36,7 @@ func LinuxConfigPipes(options map[string]interface{}, serviceSettings map[string
 
 	pipes := []*pipeline.Pipe{
 		{
-			Name: "Configuring Telegraf Plugins at " + configpath,
+			Name: "Configuring Telegraf Plugins",
 			Cmd:  exec.Command("sh", "-c", telegrafCmd+" --input-filter "+inputs+" --output-filter graphite config > "+configpath),
 		},
 	}
