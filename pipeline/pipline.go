@@ -118,6 +118,18 @@ func (p *Pipeline) IsCompleted() bool {
 	return p.completed
 }
 
+func (p *Pipeline) IsRunning() bool {
+	return p.isRunning
+}
+
+func (p *Pipeline) Failed() bool {
+	return p.failed
+}
+
+func (p *Pipeline) Success() bool {
+	return p.completed && !p.failed
+}
+
 func (p *Pipeline) GetDuration() time.Duration {
 	var duration time.Duration
 
