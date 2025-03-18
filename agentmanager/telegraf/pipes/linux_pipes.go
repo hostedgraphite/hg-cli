@@ -20,7 +20,7 @@ func LinuxInstallPipes(sysInfo sysinfo.SysInfo) []*pipeline.Pipe {
 		pipes = BrewInstallPipes()
 	} else if pkgMngr == "apt" {
 		pipes = aptInstallPipes()
-	} else if pkgMngr == "yum" {
+	} else if pkgMngr == "yum" || pkgMngr == "dnf" {
 		pipes = yumInstallPipes()
 	} else {
 		pipes = linuxBinInstallPipes(arch, distro)
@@ -143,6 +143,10 @@ func linuxBinInstallPipes(arch, distro string) []*pipeline.Pipe {
 		{
 			Name: "Extracting Telegraf archive file",
 			Cmd:  exec.Command("tar", "xf", tmpPath, "-C", tmpDir),
+		},
+		{
+			Name: "Creating Telegraf Config Directory",
+			Cmd:  exec.Command("mkdir", "-p", "/etc/telegraf"),
 		},
 		{
 			Name: "Moving Telegraf Conf File",
