@@ -3,7 +3,6 @@ package pipeline
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"time"
 
@@ -32,32 +31,31 @@ func PipelineRunner(pipeline *Pipeline) context.Context {
 	return ctx
 }
 
-func NewRunner(pipeline *Pipeline, daemonize bool, updates chan *Pipe) *runner {
-	spin := spinner.New()
-	spin.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).PaddingRight(1)
+func NewRunner(pipeline *Pipeline, render bool, updates chan *Pipe) *Runner {
+	spin := spinner.New(spinner.WithSpinner(spinner.Dot))
+	spin.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("#20b9f7")).PaddingRight(1)
 
-	r := &runner{
-		Pipeline:  pipeline,
-		Daemonize: daemonize,
-		Updates:   updates,
+	r := &Runner{
+		Pipeline: pipeline,
+		Render:   render,
+		Updates:  updates,
 
 		spinner: spin,
 	}
 	return r
 }
 
-type runner struct {
-	Pipeline  *Pipeline
-	Daemonize bool
-	Updates   chan *Pipe
+type Runner struct {
+	Pipeline *Pipeline
+	Render   bool
+	Updates  chan *Pipe
 
+	static  bool
 	spinner spinner.Model
 	ctx     context.Context
-	logger  *log.Logger
 }
 
-func (r *runner) Init() tea.Cmd {
-	logger.Infof("Running Pipeline: %s", r.Pipeline.Name)
+func (r *Runner) Init() tea.Cmd {
 	r.ctx = PipelineRunner(r.Pipeline)
 
 	return tea.Batch(
@@ -66,7 +64,7 @@ func (r *runner) Init() tea.Cmd {
 	)
 }
 
-type pipelineUpdate struct {
+type PipeUpdate struct {
 	update *Pipe
 }
 
@@ -74,18 +72,15 @@ type pipelineFinished struct {
 	finished bool
 }
 
-func (r *runner) nextPipelineMsg() tea.Msg {
-	return pipelineUpdate{<-r.Updates}
+func (r *Runner) nextPipelineMsg() tea.Msg {
+	return PipeUpdate{<-r.Updates}
 }
 
-func (r *runner) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (r *Runner) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds tea.Cmd
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
-	case pipelineUpdate:
-		output := msg.update.Name
-		logger.Info(output)
+	case PipeUpdate:
 		cmds = tea.Batch(cmds, r.nextPipelineMsg)
 	case spinner.TickMsg:
 		var cmd tea.Cmd
@@ -93,54 +88,63 @@ func (r *runner) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = tea.Batch(cmds, cmd)
 	}
 
-	if r.Pipeline.IsCompleted() {
+	if !r.static && r.Pipeline.IsCompleted() {
 		return r, tea.Quit
 	}
 
 	return r, cmds
 }
 
-func (r *runner) View() string {
-	s := "\n" + r.spinner.View() + fmt.Sprintf(r.Pipeline.Name)
+func (r *Runner) View() string {
+	s := "\n"
+	if r.Pipeline.isRunning {
+		s += r.spinner.View()
+	}
+	s += fmt.Sprintf(r.Pipeline.Name)
 	s += "\n\n"
 
 	for _, pipe := range r.Pipeline.Pipes {
 		if pipe.Executed {
 			if pipe.Success {
-				s += checkMark.Render("") + pipe.Name + fmt.Sprintf(" | finished in %dms", time.Duration(pipe.Duration))
+				s += checkMark.Render("") + pipe.Name + " | " + fmt.Sprintf("finished in %dms", time.Duration(pipe.Duration))
 			} else {
-				s += crossMark.Render("") + pipe.Name + fmt.Sprintf(" | failed after %dms", time.Duration(pipe.Duration))
+				s += crossMark.Render("") + pipe.Name + " | " + fmt.Sprintf("failed after %dms", time.Duration(pipe.Duration))
 			}
 		} else if pipe == r.Pipeline.Curr {
 			s += r.spinner.View() + pipe.Name
+		} else {
+			s += pipe.Name
 		}
 		s += "\n"
+	}
+
+	if r.Pipeline.failed {
+		s += fmt.Sprintf("\n\nFailed '%s' on cmd '%s'\n", r.Pipeline.Name, r.Pipeline.LastRun.Name)
+		s += fmt.Sprintf("Error: %s\n", r.Pipeline.Err)
+	} else if r.Pipeline.completed {
+		s += fmt.Sprintf("\n%s Completed\n", r.Pipeline.Name)
 	}
 
 	return s
 }
 
-func (r *runner) Run() error {
+func (r *Runner) Run() error {
 	var opts []tea.ProgramOption
 
-	if r.Daemonize {
+	if !r.Render {
 		opts = []tea.ProgramOption{tea.WithoutRenderer()}
-	} else {
-		logger.SetOutput(io.Discard)
 	}
 
 	_, err := tea.NewProgram(r, opts...).Run()
 	if err != nil {
-		fmt.Printf("Runner Failed")
 		return err
 	}
 
-	if r.Pipeline.failed {
-		fmt.Printf("\n\nFailed '%s' on cmd '%s'\n", r.Pipeline.Name, r.Pipeline.LastRun.Name)
-		fmt.Printf("Error: %s\n", r.Pipeline.Err)
-		return r.Pipeline.Err
-	}
+	return nil
+}
 
-	fmt.Printf("\n%s Completed\n", r.Pipeline.Name)
-	return err
+func (r *Runner) RunStatic() tea.Cmd {
+	cmds := r.Init()
+	r.static = true
+	return cmds
 }
