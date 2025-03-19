@@ -141,7 +141,7 @@ func (t *Telegraf) UpdateApiKeyPipeline(updates chan *pipeline.Pipe) (*pipeline.
 	var err error
 	var sysInfo = t.sysinfo
 	var pipes []*pipeline.Pipe
-	var filePath = t.options["configPath"].(string)
+	var filePath = t.options["config"].(string)
 	var apikey = t.apikey
 
 	switch sysInfo.Os {
@@ -153,7 +153,7 @@ func (t *Telegraf) UpdateApiKeyPipeline(updates chan *pipeline.Pipe) (*pipeline.
 		return nil, fmt.Errorf("unsupported operating system: %v", err)
 	}
 
-	pipeline := pipeline.NewPipeline(fmt.Sprintf("Uninstalling Telegraf Agent (%s-%s)", sysInfo.Os, sysInfo.PkgMngr), pipes, updates)
+	pipeline := pipeline.NewPipeline(fmt.Sprintf("Updating HostedGraphite Api Key (%s-%s)", sysInfo.Os, sysInfo.PkgMngr), pipes, updates)
 
 	return &pipeline, err
 }
