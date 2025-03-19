@@ -147,7 +147,7 @@ func (a *AgentRunner) View() string {
 			return styles.PlaceContent(
 				a.sysInfo.Width,
 				a.sysInfo.Height,
-				content,
+				styles.DefaultStyles().Page.Render(content),
 			)
 		}
 	}

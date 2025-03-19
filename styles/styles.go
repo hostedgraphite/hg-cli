@@ -148,10 +148,9 @@ func DefaultStyles() mainMenu {
 		AlignVertical(lipgloss.Center)
 
 	s.Runner = lipgloss.NewStyle().
-		Inherit(s.Page).
-		Align(lipgloss.Left).
-		PaddingTop(4).
-		PaddingLeft(4)
+		PaddingTop(10).
+		PaddingLeft(6).
+		Width(74)
 
 	s.Footer = lipgloss.NewStyle().
 		Foreground(red).
