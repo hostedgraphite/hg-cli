@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"os"
 	"os/exec"
@@ -30,20 +29,17 @@ func fileDeleter(ctx context.Context) error {
 }
 
 func main() {
-	var daemonMode bool
-	flag.BoolVar(&daemonMode, "d", false, "run as a daemon")
-	flag.Parse()
 
 	fileCtx := context.WithValue(context.Background(), "path", "./text.txt")
 
 	pipes := []*pipeline.Pipe{
-		pipeline.NewPipe("cmd1", exec.Command("sleep", "0.2s")),
-		pipeline.NewPipe("cmd2", exec.Command("sleep", "0.55s")),
-		pipeline.NewPipe("cmd3", exec.Command("sleep", "0.5s")),
-		pipeline.NewPipe("cmd4", exec.Command("sleep", "0.1s")),
+		pipeline.NewPipe("cmd1", exec.Command("sleep", "0.4s")),
+		pipeline.NewPipe("cmd2", exec.Command("sleep", "0.65s")),
+		pipeline.NewPipe("cmd3", exec.Command("sleep", "1.5s")),
+		pipeline.NewPipe("cmd4", exec.Command("sleep", "0.6s")),
 		pipeline.NewPipe("cmd5", exec.Command("echo", "hello")).Context(fileCtx).PostRun(fileWriter),
 		pipeline.NewPipe("cmd6", exec.Command("sleep", "0.323s")),
-		pipeline.NewPipe("cmd7", exec.Command("sleep", "0.143s")).Context(fileCtx).PostRun(fileDeleter),
+		pipeline.NewPipe("cmd7", exec.Command("sleep", "1.143s")).Context(fileCtx).PostRun(fileDeleter),
 	}
 
 	updates := make(chan *pipeline.Pipe)
@@ -53,7 +49,7 @@ func main() {
 
 	runner := pipeline.NewRunner(
 		&testpipeline,
-		daemonMode,
+		true,
 		updates,
 	)
 

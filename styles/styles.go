@@ -33,6 +33,7 @@ type mainMenu struct {
 	Selections,
 	Selected,
 	Updates,
+	Runner,
 	Summary,
 	Error,
 	Cli,
@@ -145,6 +146,11 @@ func DefaultStyles() mainMenu {
 		Foreground(orange).
 		Height(30).
 		AlignVertical(lipgloss.Center)
+
+	s.Runner = lipgloss.NewStyle().
+		PaddingTop(10).
+		PaddingLeft(6).
+		Width(74)
 
 	s.Footer = lipgloss.NewStyle().
 		Foreground(red).

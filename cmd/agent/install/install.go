@@ -114,7 +114,7 @@ func execute(apikey, agentName string, plugins []string, sysInfo sysinfo.SysInfo
 	// Execute the pipeline
 	runner := pipeline.NewRunner(
 		installPipeline,
-		false,
+		true,
 		updates,
 	)
 	err = runner.Run()
