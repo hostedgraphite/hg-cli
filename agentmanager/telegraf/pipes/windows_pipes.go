@@ -100,3 +100,23 @@ func IsInstalledWindows() bool {
 
 	return false
 }
+
+func WindowsUninstallPipes() ([]*pipeline.Pipe, error) {
+	shell := determineShell()
+
+	if !IsInstalledWindows() {
+		return nil, fmt.Errorf("no exe found - Unable to remove service")
+	}
+
+	pipes := []*pipeline.Pipe{
+		{
+			Name: "Stopping telegraf service",
+			Cmd:  exec.Command(shell, "-Command", `& "C:\Program Files\InfluxData\telegraf\telegraf.exe" --service-name telegraf service stop`),
+		},
+		{
+			Name: "Uninstalling telegraf service",
+			Cmd:  exec.Command(shell, "-Command", `& "C:\Program Files\InfluxData\telegraf\telegraf.exe" --service-name telegraf service uninstall`),
+		},
+	}
+	return pipes, nil
+}

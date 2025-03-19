@@ -194,3 +194,56 @@ func linuxBinInstallPipes(arch, distro string) []*pipeline.Pipe {
 	return pipes
 
 }
+
+func LinuxUninstallPipes(sysInfo sysinfo.SysInfo) []*pipeline.Pipe {
+	var pipes []*pipeline.Pipe
+	pkgMngr := sysInfo.PkgMngr
+
+	if pkgMngr == "brew" {
+		pipes = BrewUninstallPipes()
+	} else if pkgMngr == "" {
+		pipes = linuxUninstallerPipes()
+	} else {
+		pipes = linuxPkgMngrUninstallPipes(pkgMngr)
+	}
+
+	return pipes
+}
+
+func linuxPkgMngrUninstallPipes(pkgMngr string) []*pipeline.Pipe {
+	pipes := []*pipeline.Pipe{
+		{
+			Name: "Stopping Telegraf Service",
+			Cmd:  exec.Command(pkgMngr, "stop", "telegraf"),
+		},
+		{
+			Name: "Uninstalling Telegraf Agent",
+			Cmd:  exec.Command(pkgMngr, "remove", "telegraf", "-y"),
+		},
+	}
+
+	return pipes
+}
+
+func linuxUninstallerPipes() []*pipeline.Pipe {
+	pipes := []*pipeline.Pipe{
+		{
+			Name: "Stopping Telegraf Service",
+			Cmd:  exec.Command("systemctl", "stop", "telegraf"),
+		},
+		{
+			Name: "Removing Telegraf Binary",
+			Cmd:  exec.Command("rm", "/usr/bin/telegraf"),
+		},
+		{
+			Name: "Removing Telegraf Service",
+			Cmd:  exec.Command("rm", "-rf", "/etc/systemd/system/telegraf.service"),
+		},
+		{
+			Name: "Removing Telegraf User",
+			Cmd:  exec.Command("userdel", "telegraf"),
+		},
+	}
+
+	return pipes
+}
