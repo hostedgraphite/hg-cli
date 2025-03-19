@@ -160,6 +160,7 @@ func linuxBinInstallPipes(arch, distro string) []*pipeline.Pipe {
 			Name: "Adding service file to systemd",
 			Cmd:  exec.Command("mv", telegrafService, "/etc/systemd/system/telegraf.service"),
 		},
+		// TODO: Check if the users exists before creating, pkgmgrs don't remove users.
 		{
 			Name: "Creating telegraf service group",
 			Cmd:  exec.Command("groupadd", "-g", "988", "telegraf"),
@@ -214,7 +215,7 @@ func linuxPkgMngrUninstallPipes(pkgMngr string) []*pipeline.Pipe {
 	pipes := []*pipeline.Pipe{
 		{
 			Name: "Stopping Telegraf Service",
-			Cmd:  exec.Command(pkgMngr, "stop", "telegraf"),
+			Cmd:  exec.Command("systemctl", "stop", "telegraf"),
 		},
 		{
 			Name: "Uninstalling Telegraf Agent",

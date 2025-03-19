@@ -19,8 +19,18 @@ type Telegraf struct {
 }
 
 func NewTelegrafAgent(options map[string]interface{}, sysInfo sysinfo.SysInfo) *Telegraf {
+	var apikey string
+	// Apikey should have been verified by this point,
+	// both in the TUI and the CLI. Only the installation and
+	// udpate key should have the options with the apikey
+	// so it can be set to empty string here.
+	apikey, ok := options["apikey"].(string)
+	if !ok {
+		apikey = ""
+	}
+
 	agent := &Telegraf{
-		apikey:          options["apikey"].(string),
+		apikey:          apikey,
 		sysinfo:         sysInfo,
 		options:         options,
 		serviceSettings: GetServiceSettings(sysInfo.Os, sysInfo.Arch, sysInfo.PkgMngr),
