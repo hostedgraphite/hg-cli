@@ -3,18 +3,18 @@ package install
 import (
 	//  "fmt"
 
-	"context"
 	"fmt"
 
 	"github.com/hostedgraphite/hg-cli/agentmanager"
 	"github.com/hostedgraphite/hg-cli/agentmanager/telegraf"
 	"github.com/hostedgraphite/hg-cli/agentmanager/utils"
 	"github.com/hostedgraphite/hg-cli/formatters"
+	"github.com/hostedgraphite/hg-cli/pipeline"
 	"github.com/hostedgraphite/hg-cli/sysinfo"
 	cliUtils "github.com/hostedgraphite/hg-cli/utils"
 
 	// windows color support
-	"github.com/charmbracelet/huh/spinner"
+
 	"github.com/spf13/cobra"
 )
 
@@ -87,14 +87,9 @@ func validateArgs(args, plugins []string) error {
 	return nil
 }
 
-func execute(apikey, agentName string, plugins []string, sysinfo sysinfo.SysInfo) error {
+func execute(apikey, agentName string, plugins []string, sysInfo sysinfo.SysInfo) error {
 	var err error
 	var selectedPlugins []string
-
-	serviceSettings := telegraf.GetServiceSettings(sysinfo.Os, sysinfo.Arch, sysinfo.PkgMngr)
-
-	agent := agentmanager.GetAgent(agentName)
-	updates := make(chan string)
 
 	if len(plugins) == 0 {
 		selectedPlugins = telegraf.DefaultTelegrafPlugins
@@ -104,34 +99,25 @@ func execute(apikey, agentName string, plugins []string, sysinfo sysinfo.SysInfo
 
 	options := map[string]interface{}{
 		"plugins": selectedPlugins,
+		"apikey":  apikey,
+	}
+	serviceSettings := telegraf.GetServiceSettings(sysInfo.Os, sysInfo.Arch, sysInfo.PkgMngr)
+	agent := agentmanager.NewAgent(agentName, options, sysInfo)
+
+	// Build the pipeline
+	updates := make(chan *pipeline.Pipe)
+	installPipeline, err := agent.InstallPipeline(updates)
+	if err != nil {
+		return err
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	go func(ctx context.Context) {
-		defer close(updates)
-		err = agent.Install(apikey, sysinfo, options, updates)
-		if err != nil {
-			updates <- "error installing agent: " + err.Error()
-			ctx.Err()
-			return
-		}
-		ctx.Done()
-	}(ctx)
-
-	err = spinner.New().
-		Title("Updating In Progress...").
-		Context(ctx).
-		ActionWithErr(func(ctx context.Context) error {
-			for msg := range updates {
-				fmt.Print("\r")
-				fmt.Print("\033[K")
-				fmt.Println(msg)
-			}
-			return nil
-		}).
-		Run()
+	// Execute the pipeline
+	runner := pipeline.NewRunner(
+		installPipeline,
+		true,
+		updates,
+	)
+	err = runner.Run()
 	if err != nil {
 		return err
 	}

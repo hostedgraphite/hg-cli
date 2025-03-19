@@ -3,16 +3,23 @@ package pipeline
 import (
 	"context"
 	"fmt"
-	"io"
 	"os"
 	"time"
 
+	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/log"
 )
 
 var logger = log.New(os.Stdout)
+
+var (
+	checkMark     = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).SetString("✓")
+	crossMark     = lipgloss.NewStyle().Foreground(lipgloss.Color("9")).SetString("✗")
+	pipelineTitle = lipgloss.NewStyle().BorderStyle(lipgloss.DoubleBorder()).BorderBottom(true).BorderForeground(lipgloss.Color("#f66c00")).Bold(true)
+)
 
 // Starts the Provided Pipeline in a go routine and returns a context that will be cancelled after 240 seconds
 func PipelineRunner(pipeline *Pipeline) context.Context {
@@ -26,30 +33,37 @@ func PipelineRunner(pipeline *Pipeline) context.Context {
 	return ctx
 }
 
-func NewRunner(pipeline *Pipeline, daemonize bool, updates chan *Pipe) *runner {
-	r := &runner{
-		Pipeline:  pipeline,
-		Daemonize: daemonize,
-		Updates:   updates,
-
-		spinner: spinner.New(),
+func NewRunner(pipeline *Pipeline, render bool, updates chan *Pipe) *Runner {
+	r := &Runner{
+		Pipeline: pipeline,
+		Render:   render,
+		Updates:  updates,
 	}
 	return r
 }
 
-type runner struct {
-	Pipeline  *Pipeline
-	Daemonize bool
-	Updates   chan *Pipe
+type Runner struct {
+	Pipeline *Pipeline
+	Render   bool
+	Updates  chan *Pipe
 
-	spinner spinner.Model
-	ctx     context.Context
-	logger  *log.Logger
+	static    bool
+	spinner   spinner.Model
+	progress  progress.Model
+	progcount int
+	ctx       context.Context
 }
 
-func (r *runner) Init() tea.Cmd {
-	logger.Infof("Running Pipeline: %s", r.Pipeline.Name)
+func (r *Runner) Init() tea.Cmd {
 	r.ctx = PipelineRunner(r.Pipeline)
+
+	spin := spinner.New(spinner.WithSpinner(spinner.Dot))
+	spin.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("#20b9f7")).PaddingRight(1)
+
+	prog := progress.New(progress.WithDefaultGradient())
+
+	r.spinner = spin
+	r.progress = prog
 
 	return tea.Batch(
 		r.spinner.Tick,
@@ -57,7 +71,7 @@ func (r *runner) Init() tea.Cmd {
 	)
 }
 
-type pipelineUpdate struct {
+type PipeUpdate struct {
 	update *Pipe
 }
 
@@ -65,18 +79,16 @@ type pipelineFinished struct {
 	finished bool
 }
 
-func (r *runner) nextPipelineMsg() tea.Msg {
-	return pipelineUpdate{<-r.Updates}
+func (r *Runner) nextPipelineMsg() tea.Msg {
+	return PipeUpdate{<-r.Updates}
 }
 
-func (r *runner) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (r *Runner) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds tea.Cmd
 
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
-	case pipelineUpdate:
-		output := msg.update.Name
-		logger.Info(output)
+	case PipeUpdate:
+		r.progcount++
 		cmds = tea.Batch(cmds, r.nextPipelineMsg)
 	case spinner.TickMsg:
 		var cmd tea.Cmd
@@ -84,38 +96,76 @@ func (r *runner) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmds = tea.Batch(cmds, cmd)
 	}
 
-	if r.Pipeline.IsCompleted() {
+	if !r.static && r.Pipeline.IsCompleted() {
 		return r, tea.Quit
 	}
 
 	return r, cmds
 }
 
-func (r *runner) View() string {
-	s := "\n" + r.spinner.View() + fmt.Sprintf(" Executing Job: %s", r.Pipeline.Name)
-	s += "\n\n"
+func (r *Runner) View() string {
+	var s, title string
 
-	for _, pipe := range r.Pipeline.Pipes {
-		s += pipe.Name
+	// Pipeline Title + Spinner
+	if r.Pipeline.isRunning {
+		title = r.spinner.View() + r.Pipeline.Name
+	} else {
+		title = r.Pipeline.Name
+	}
+	s += "\n" + pipelineTitle.Render((title)) + "\n"
+
+	// Pipe outputs
+	spipes := ""
+	for index, pipe := range r.Pipeline.Pipes {
 		if pipe.Executed {
-			s += fmt.Sprintf(" finished in %dms", time.Duration(pipe.Duration))
+			if pipe.Success {
+				spipes += checkMark.Render("") + pipe.Name + " | " + fmt.Sprintf("finished in %dms", time.Duration(pipe.Duration))
+			} else {
+				spipes += crossMark.Render("") + pipe.Name + " | " + fmt.Sprintf("failed after %dms", time.Duration(pipe.Duration))
+			}
+		} else if pipe == r.Pipeline.Curr {
+			spipes += r.spinner.View() + pipe.Name
 		}
-		s += "\n"
+		if pipe.Executed && index != len(r.Pipeline.Pipes)-1 {
+			spipes += "\n"
+		}
+	}
+	s += lipgloss.NewStyle().MarginLeft(2).Render(spipes)
+
+	// Progress Bar
+	if r.Pipeline.IsRunning() {
+		percprog := float64(r.progcount-1) / float64(len(r.Pipeline.Pipes))
+		s += "\n\n" + r.progress.ViewAs(percprog)
+	}
+
+	// Finial Messages
+	if r.Pipeline.failed {
+		s += fmt.Sprintf("\n\nFailed '%s' on cmd '%s'\n", r.Pipeline.Name, r.Pipeline.LastRun.Name)
+		s += fmt.Sprintf("Error: %s\n", r.Pipeline.Err)
+	} else if r.Pipeline.completed {
+		s += fmt.Sprintf("\n\n%s Completed\n", r.Pipeline.Name)
 	}
 
 	return s
 }
 
-func (r *runner) Run() error {
+func (r *Runner) Run() error {
 	var opts []tea.ProgramOption
 
-	if r.Daemonize {
+	if !r.Render {
 		opts = []tea.ProgramOption{tea.WithoutRenderer()}
-	} else {
-		logger.SetOutput(io.Discard)
 	}
 
 	_, err := tea.NewProgram(r, opts...).Run()
-	fmt.Printf("\n%s Completed\n", r.Pipeline.Name)
-	return err
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *Runner) RunStatic() tea.Cmd {
+	cmds := r.Init()
+	r.static = true
+	return cmds
 }

@@ -10,6 +10,8 @@ github.com/charmbracelet/bubbles v0.20.0 h1:jSZu6qD8cRQ6k9OMfR1WlM+ruM8fkPWkHvQW
 github.com/charmbracelet/bubbles v0.20.0/go.mod h1:39slydyswPy+uVOHZ5x/GjwVAFkCsV8IIVy+4MhzwwU=
 github.com/charmbracelet/bubbletea v1.3.4 h1:kCg7B+jSCFPLYRA52SDZjr51kG/fMUEoPoZrkaDHyoI=
 github.com/charmbracelet/bubbletea v1.3.4/go.mod h1:dtcUCyCGEX3g9tosuYiut3MXgY/Jsv9nKVdibKKRRXo=
+github.com/charmbracelet/harmonica v0.2.0 h1:8NxJWRWg/bzKqqEaaeFNipOu77YR5t8aSwG4pgaUBiQ=
+github.com/charmbracelet/harmonica v0.2.0/go.mod h1:KSri/1RMQOZLbw7AHqgcBycp8pgJnQMYYT8QZRqZ1Ao=
 github.com/charmbracelet/huh v0.6.1-0.20250310115732-9b4438c58c9e h1:rluRrNdbZxIQICzW/fDO/VTgt4KLYyFQM8R6Sh9P9Jc=
 github.com/charmbracelet/huh v0.6.1-0.20250310115732-9b4438c58c9e/go.mod h1:KxTA8VTYA9RZqxcFZBnRLKNpCwHfu3fz0gNtjANA9Z4=
 github.com/charmbracelet/huh/spinner v0.0.0-20250305131932-4a188eb1ecab h1:IHqC0aFYwObgRFCSMtUy9P5n+1yC41Ig5NmNzQY3r00=
