@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
 
 	telegrafPipes "github.com/hostedgraphite/hg-cli/agentmanager/telegraf/pipes"
 	"github.com/hostedgraphite/hg-cli/agentmanager/utils"
@@ -134,4 +135,57 @@ func (t *Telegraf) UninstallPipeline(updates chan *pipeline.Pipe) (*pipeline.Pip
 	pipeline := pipeline.NewPipeline(fmt.Sprintf("Uninstalling Telegraf Agent (%s-%s)", sysInfo.Os, sysInfo.PkgMngr), pipes, updates)
 
 	return &pipeline, err
+}
+
+func (t *Telegraf) UpdateApiKeyPipeline(updates chan *pipeline.Pipe) (*pipeline.Pipeline, error) {
+	var err error
+	var sysInfo = t.sysinfo
+	var pipes []*pipeline.Pipe
+	var filePath = t.options["config"].(string)
+	var apikey = t.apikey
+
+	switch sysInfo.Os {
+	case "linux":
+		pipes = telegrafPipes.LinuxUpdateApiKeyPipe(apikey, filePath)
+	case "darwin", "windows":
+		pipes = defaultApiKeyPipe(apikey, filePath)
+	default:
+		return nil, fmt.Errorf("unsupported operating system: %v", err)
+	}
+
+	pipeline := pipeline.NewPipeline(fmt.Sprintf("Updating HostedGraphite Api Key (%s-%s)", sysInfo.Os, sysInfo.PkgMngr), pipes, updates)
+
+	return &pipeline, err
+}
+
+func defaultApiKeyPipe(apikey, filePath string) []*pipeline.Pipe {
+	cmd := exec.Command("sleep", "1")
+
+	pipes := []*pipeline.Pipe{
+		pipeline.NewPipe("Updating Telegraf Config", cmd).PostRun(
+			func(ctx context.Context) error {
+				return apiUpdater(apikey, filePath)
+			},
+		),
+	}
+
+	return pipes
+}
+
+func apiUpdater(apikey, filePath string) error {
+	newPrefix := apikey + ".telegraf"
+	re := regexp.MustCompile(`(?m)^\s*prefix\s*=\s*".*"`)
+	currentConfig, err := os.ReadFile(filePath)
+	if err != nil {
+		return fmt.Errorf("error reading file: %v", err)
+	}
+
+	updatedConfig := re.ReplaceAllString(string(currentConfig), fmt.Sprintf(`prefix = "%s"`, newPrefix))
+
+	err = os.WriteFile(filePath, []byte(updatedConfig), 0644)
+	if err != nil {
+		return fmt.Errorf("error writing file: %v", err)
+	}
+
+	return nil
 }

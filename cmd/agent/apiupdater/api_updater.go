@@ -2,15 +2,14 @@ package apiupdater
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/hostedgraphite/hg-cli/agentmanager"
 	"github.com/hostedgraphite/hg-cli/agentmanager/telegraf"
 	"github.com/hostedgraphite/hg-cli/agentmanager/utils"
 	"github.com/hostedgraphite/hg-cli/formatters"
+	"github.com/hostedgraphite/hg-cli/pipeline"
 	"github.com/hostedgraphite/hg-cli/sysinfo"
 
-	"github.com/charmbracelet/huh/spinner"
 	"github.com/spf13/cobra"
 )
 
@@ -54,7 +53,7 @@ func ApiUpdateCmd(sysinfo sysinfo.SysInfo) *cobra.Command {
 		},
 	}
 
-	cmd.Flags().StringVar(&apikey, "apikey", "", "Your Hosted Graphite API key (required)")
+	cmd.Flags().StringVar(&apikey, "api-key", "", "Your Hosted Graphite API key (required)")
 	cmd.Flags().StringVar(&path, "config", "", "The path to the agent configuration file")
 
 	return cmd
@@ -67,36 +66,29 @@ func validateArgs(args []string) error {
 	return nil
 }
 
-func execute(apikey, agentName, path string, sysinfo sysinfo.SysInfo) error {
+func execute(apikey, agentName, path string, sysInfo sysinfo.SysInfo) error {
 	var err error
-
-	agent := agentmanager.GetAgent(agentName)
-	updates := make(chan string)
 	options := map[string]interface{}{
 		"config": path,
+		"apikey": apikey,
 	}
-	serviceSettings := telegraf.GetServiceSettings(sysinfo.Os, sysinfo.Arch, sysinfo.PkgMngr)
-
-	go func() {
-		defer close(updates)
-		err = agent.UpdateApiKey(apikey, sysinfo, options, updates)
-		if err != nil {
-			updates <- "error updating api key"
-			return
-		}
-	}()
-
-	err = spinner.New().Title("Updating In Progress...").Action(func() {
-		for msg := range updates {
-			fmt.Println(msg)
-			if strings.HasPrefix(msg, "error") || strings.HasPrefix(msg, "Completed") {
-				break
-			}
-		}
-	}).Run()
-
+	agent := agentmanager.NewAgent(agentName, options, sysInfo)
+	updates := make(chan *pipeline.Pipe)
+	serviceSettings := telegraf.GetServiceSettings(sysInfo.Os, sysInfo.Arch, sysInfo.PkgMngr)
+	updateApikeyPipeline, err := agent.UpdateApiKeyPipeline(updates)
 	if err != nil {
-		return fmt.Errorf("error updating api key: %v", err)
+		return err
+	}
+
+	runner := pipeline.NewRunner(
+		updateApikeyPipeline,
+		true,
+		updates,
+	)
+
+	err = runner.Run()
+	if err != nil {
+		return err
 	}
 
 	summary := formatters.ActionSummary{

@@ -51,7 +51,6 @@ func (a *AgentRunner) Init() tea.Cmd {
 	updates := make(chan string)
 	agent := agentmanager.GetAgent(a.agent)
 
-	apikey := a.options["apikey"].(string)
 	switch a.action {
 	case "Install":
 		agent = agentmanager.NewAgent(a.agent, a.options, a.sysInfo)
@@ -68,10 +67,19 @@ func (a *AgentRunner) Init() tea.Cmd {
 		a.runner = runner
 		return a.runner.RunStatic()
 	case "Update Api Key":
-		go func() {
-			time.Sleep(2 * time.Second)
-			agent.UpdateApiKey(apikey, a.sysInfo, a.options, updates)
-		}()
+		agent = agentmanager.NewAgent(a.agent, a.options, a.sysInfo)
+		updates := make(chan *pipeline.Pipe)
+		updateApikeyPipeline, err := agent.UpdateApiKeyPipeline(updates)
+		if err != nil {
+			panic(err) // This BAD. TODO: not this
+		}
+		runner := pipeline.NewRunner(
+			updateApikeyPipeline,
+			false,
+			updates,
+		)
+		a.runner = runner
+		return a.runner.RunStatic()
 	case "Uninstall":
 		go func() {
 			time.Sleep(2 * time.Second)
@@ -127,19 +135,28 @@ func (a *AgentRunner) Update(msg tea.Msg) (types.View, tea.Cmd) {
 
 func (a *AgentRunner) View() string {
 	var summary formatters.ActionSummary
-	var generatedSummary string
 
 	if a.runner != nil {
 		if a.runner.Pipeline.IsCompleted() {
-			summary = formatters.ActionSummary{
-				Agent:    a.agent,
-				Success:  a.runner.Pipeline.Success(),
-				Action:   a.action,
-				Plugins:  a.options["plugins"].([]string),
-				Config:   a.serviceSettings["configPath"],
-				StartCmd: a.serviceSettings["startHint"],
+			switch a.action {
+			case "Install":
+				summary = formatters.ActionSummary{
+					Agent:    a.agent,
+					Success:  a.runner.Pipeline.Success(),
+					Action:   a.action,
+					Plugins:  a.options["plugins"].([]string),
+					Config:   a.serviceSettings["configPath"],
+					StartCmd: a.serviceSettings["startHint"],
+				}
+			case "Update Api Key":
+				summary = formatters.ActionSummary{
+					Agent:      a.agent,
+					Success:    a.runner.Pipeline.Success(),
+					Action:     a.action,
+					Config:     a.options["config"].(string),
+					RestartCmd: a.serviceSettings["restartHint"],
+				}
 			}
-			return formatters.GenerateSummary(summary, a.sysInfo.Width, a.sysInfo.Height)
 		} else {
 			s := styles.DefaultStyles()
 			content := a.runner.View()
@@ -152,44 +169,5 @@ func (a *AgentRunner) View() string {
 		}
 	}
 
-	if strings.HasPrefix(a.currentUpdate, "Completed") {
-		if a.action == "Install" {
-			summary = formatters.ActionSummary{
-				Agent:    a.agent,
-				Success:  true,
-				Action:   a.action,
-				Plugins:  a.options["plugins"].([]string),
-				Config:   a.serviceSettings["configPath"],
-				StartCmd: a.serviceSettings["startHint"],
-			}
-		} else if a.action == "Update Api Key" {
-			summary = formatters.ActionSummary{
-				Agent:      a.agent,
-				Success:    true,
-				Action:     a.action,
-				Config:     a.options["config"].(string),
-				RestartCmd: a.serviceSettings["restartHint"],
-			}
-		} else {
-			// Uninstall
-			summary = formatters.ActionSummary{
-				Agent:   a.agent,
-				Success: true,
-				Action:  a.action,
-			}
-		}
-
-		generatedSummary = formatters.GenerateSummary(summary, a.sysInfo.Width, a.sysInfo.Height)
-	} else {
-		s := styles.DefaultStyles()
-		content := s.Updates.Render(a.currentUpdate)
-		content = s.Page.Render(content)
-		return styles.PlaceContent(
-			a.sysInfo.Width,
-			a.sysInfo.Height,
-			content,
-		)
-	}
-
-	return generatedSummary
+	return formatters.GenerateSummary(summary, a.sysInfo.Width, a.sysInfo.Height)
 }

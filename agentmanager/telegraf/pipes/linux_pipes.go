@@ -1,6 +1,7 @@
 package pipes
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -247,4 +248,41 @@ func linuxUninstallerPipes() []*pipeline.Pipe {
 	}
 
 	return pipes
+}
+
+func LinuxUpdateApiKeyPipe(apikey, filePath string) []*pipeline.Pipe {
+	cmd := exec.Command("sleep", "1")
+
+	pipes := []*pipeline.Pipe{
+		pipeline.NewPipe("Updating Telegraf Config", cmd).PostRun(
+			func(ctx context.Context) error {
+				return linuxApiUpdater(apikey, filePath)
+			},
+		),
+	}
+
+	return pipes
+}
+
+func linuxApiUpdater(apikey, filePath string) error {
+	fullConfig, err := utils.ReadFile(filePath)
+	if err != nil {
+		return fmt.Errorf("error reading file: %v", err)
+	}
+
+	graphiteBlock := `\[\[outputs\.graphite\]\](?:.|\s)*?\[\[`
+	updates := map[string]string{
+		`prefix\s*=\s*".*?"`: fmt.Sprintf(`prefix = "%s.telegraf"`, apikey),
+	}
+	updatedConfig, err := utils.UpdateConfigBlock(fullConfig, graphiteBlock, updates)
+	if err != nil {
+		return fmt.Errorf("error writing file:%v", err)
+	}
+
+	err = utils.WriteFile(filePath, updatedConfig)
+	if err != nil {
+		return fmt.Errorf("error writing file:%v", err)
+	}
+
+	return nil
 }
