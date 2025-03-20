@@ -2,7 +2,6 @@ package agents
 
 import (
 	"strings"
-	"time"
 
 	"github.com/hostedgraphite/hg-cli/agentmanager"
 	"github.com/hostedgraphite/hg-cli/formatters"
@@ -49,11 +48,10 @@ func NewAgentRunner(agent, action string, options map[string]interface{}, sysInf
 
 func (a *AgentRunner) Init() tea.Cmd {
 	updates := make(chan string)
-	agent := agentmanager.GetAgent(a.agent)
 
 	switch a.action {
 	case "Install":
-		agent = agentmanager.NewAgent(a.agent, a.options, a.sysInfo)
+		agent := agentmanager.NewAgent(a.agent, a.options, a.sysInfo)
 		updates := make(chan *pipeline.Pipe)
 		installPipeline, err := agent.InstallPipeline(updates)
 		if err != nil {
@@ -67,7 +65,7 @@ func (a *AgentRunner) Init() tea.Cmd {
 		a.runner = runner
 		return a.runner.RunStatic()
 	case "Update Api Key":
-		agent = agentmanager.NewAgent(a.agent, a.options, a.sysInfo)
+		agent := agentmanager.NewAgent(a.agent, a.options, a.sysInfo)
 		updates := make(chan *pipeline.Pipe)
 		updateApikeyPipeline, err := agent.UpdateApiKeyPipeline(updates)
 		if err != nil {
@@ -81,10 +79,19 @@ func (a *AgentRunner) Init() tea.Cmd {
 		a.runner = runner
 		return a.runner.RunStatic()
 	case "Uninstall":
-		go func() {
-			time.Sleep(2 * time.Second)
-			agent.Uninstall(a.sysInfo, updates)
-		}()
+		agent := agentmanager.NewAgent(a.agent, nil, a.sysInfo)
+		updates := make(chan *pipeline.Pipe)
+		uninstallPipeline, err := agent.UninstallPipeline(updates)
+		if err != nil {
+			panic(err) // This BAD. TODO: not this
+		}
+		runner := pipeline.NewRunner(
+			uninstallPipeline,
+			false,
+			updates,
+		)
+		a.runner = runner
+		return a.runner.RunStatic()
 	}
 
 	return func() tea.Msg {
