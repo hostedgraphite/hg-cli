@@ -163,6 +163,12 @@ func (a *AgentRunner) View() string {
 					Config:     a.options["config"].(string),
 					RestartCmd: a.serviceSettings["restartHint"],
 				}
+			case "Uninstall":
+				summary = formatters.ActionSummary{
+					Agent:   a.agent,
+					Success: a.runner.Pipeline.Success(),
+					Action:  a.action,
+				}
 			}
 		} else {
 			s := styles.DefaultStyles()
