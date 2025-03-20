@@ -28,7 +28,8 @@ https://docs.hostedgraphite.com/hg-cli
 `
 
 var uninstallCallToAction = `
-Thanks for running the Hosted Graphite CLI—this has now been uninstalled. Here to help with your next monitoring step!
+Thanks for using the Hosted Graphite CLI!
+The agent has been uninstalled, the hg-cli remains available to assist with your monitoring needs.
 `
 
 type ActionSummary struct {
@@ -133,6 +134,8 @@ func GenerateCliSummary(action ActionSummary) string {
 		ctoAction = defaultCallToAction
 	case "Uninstall":
 		ctoAction = uninstallCallToAction
+		viewStr.WriteString(ctoAction)
+		return viewStr.String()
 	}
 
 	header := "\n" + titleCaser.String(action.Agent) + " Service Details"
