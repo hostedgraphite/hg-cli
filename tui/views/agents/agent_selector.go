@@ -40,7 +40,7 @@ func NewAgentView(sysInfo sysinfo.SysInfo) *AgentsView {
 			Options(huh.NewOptions(agents...)...).
 			Validate(func(agent string) error {
 				if slices.Contains(commingSoon, selectedAgent) {
-					return fmt.Errorf("Sorry, this agent is not yet available")
+					return fmt.Errorf("sorry, this agent is not yet available")
 				}
 				return nil
 			}).
@@ -60,7 +60,7 @@ func NewAgentView(sysInfo sysinfo.SysInfo) *AgentsView {
 			}, &selectedAgent).
 			Validate(func(action string) error {
 				if utils.ActionRequiresSudo(sysInfo.Os, action, sysInfo.PkgMngr) && !sysInfo.SudoPerm {
-					return fmt.Errorf("This action requires admin privileges, please run as root")
+					return fmt.Errorf("this action requires admin privileges, please run as root")
 				}
 				return nil
 			}).
