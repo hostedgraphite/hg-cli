@@ -5,6 +5,7 @@ import (
 
 	"github.com/hostedgraphite/hg-cli/agentmanager"
 	"github.com/hostedgraphite/hg-cli/agentmanager/utils"
+	"github.com/hostedgraphite/hg-cli/formatters"
 	"github.com/hostedgraphite/hg-cli/pipeline"
 	"github.com/hostedgraphite/hg-cli/sysinfo"
 	cliUtils "github.com/hostedgraphite/hg-cli/utils"
@@ -86,6 +87,14 @@ func execute(agentName string, sysInfo sysinfo.SysInfo) error {
 	if err != nil {
 		return err
 	}
+
+	summary := formatters.ActionSummary{
+		Agent:   agentName,
+		Success: true,
+		Action:  "Uninstall",
+	}
+
+	fmt.Println(formatters.GenerateCliSummary(summary))
 
 	return err
 }

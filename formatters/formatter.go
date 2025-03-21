@@ -6,10 +6,31 @@ import (
 	"strings"
 	"text/template"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/hostedgraphite/hg-cli/styles"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
-var ctoAction = "For more details on reviewing your metrics, visit the documentation:\nhttps://docs.hostedgraphite.com/hg-cli"
+var (
+	titleCaser   = cases.Title(language.English)
+	labelStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("#20b9f7")).Bold(true)
+	restartLabel = labelStyle.Render("Restart Command   : ")
+	startLabel   = labelStyle.Render("Start Command     : ")
+	configLabel  = labelStyle.Render("Config Path       : ")
+	pluginsLabel = labelStyle.Render("Plugins Installed : ")
+)
+
+var defaultCallToAction = `
+To view your metrics, head back to your account, and a dashboard will be automatically added shortly.
+For more information on using the hg-cli, visit the documentation:
+https://docs.hostedgraphite.com/hg-cli
+`
+
+var uninstallCallToAction = `
+Thanks for using the Hosted Graphite CLI!
+The agent has been uninstalled, the hg-cli remains available to assist with your monitoring needs.
+`
 
 type ActionSummary struct {
 	Agent      string
@@ -30,13 +51,13 @@ func GenerateSummary(action ActionSummary, width, height int) string {
 	switch action.Action {
 	case "Install":
 		title = "Install Agent"
-		ctoaction = ctoAction
+		ctoaction = defaultCallToAction
 	case "Update Api Key":
 		title = "Update Api Key"
-		ctoaction = ctoAction
+		ctoaction = defaultCallToAction
 	case "Uninstall":
 		title = "Uninstall Agent"
-		ctoaction = ""
+		ctoaction = uninstallCallToAction
 	}
 
 	footer := s.Footer.Render("Thank you for using MetriFire! 🔥 \n(Press q or ctrl+c to quit)")
@@ -99,28 +120,31 @@ func GenerateSummary(action ActionSummary, width, height int) string {
 
 func GenerateCliSummary(action ActionSummary) string {
 	var viewStr strings.Builder
-	var summary, title, plugins, cmd string
-	s := styles.DefaultStyles()
+	var plugins, cmd, ctoAction string
+
+	pipelineTitle := lipgloss.NewStyle().BorderStyle(lipgloss.DoubleBorder()).Width(40).BorderBottom(true).BorderForeground(lipgloss.Color("#f66c00")).Bold(true)
 
 	switch action.Action {
 	case "Update Api Key":
-		title = "Update Api Key Summary"
-		plugins = ""
-		cmd = fmt.Sprintf("Restart cmd: %s\n", action.RestartCmd)
+		cmd = fmt.Sprintf("%s %s\n", restartLabel, action.RestartCmd)
+		ctoAction = defaultCallToAction
 	case "Install":
-		title = "Installation Summary"
-		plugins = fmt.Sprintf("Plugins: %s\n", strings.Join(action.Plugins, ", "))
-		cmd = fmt.Sprintf("Start cmd: %s\n", action.StartCmd)
+		plugins = fmt.Sprintf("%s %s\n", pluginsLabel, strings.Join(action.Plugins, ", "))
+		cmd = fmt.Sprintf("%s %s\n", startLabel, action.StartCmd)
+		ctoAction = defaultCallToAction
+	case "Uninstall":
+		ctoAction = uninstallCallToAction
+		viewStr.WriteString(ctoAction)
+		return viewStr.String()
 	}
 
-	viewStr.WriteString("\n" + title + "\n")
-	viewStr.WriteString(fmt.Sprintf("Agent: %s\n", action.Agent))
-	viewStr.WriteString(cmd)
-	viewStr.WriteString(fmt.Sprintf("Config: %s\n", action.Config))
+	header := "\n" + titleCaser.String(action.Agent) + " Service Details"
+
+	viewStr.WriteString(pipelineTitle.Render(header))
+	viewStr.WriteString("\n" + cmd)
+	viewStr.WriteString(fmt.Sprintf("%s %s\n", configLabel, action.Config))
 	viewStr.WriteString(plugins)
-	viewStr.WriteString("\n" + ctoAction + "\n")
+	viewStr.WriteString(ctoAction)
 
-	summary = s.Cli.Render(viewStr.String())
-
-	return summary
+	return viewStr.String()
 }
