@@ -2,14 +2,13 @@ package uninstall
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/hostedgraphite/hg-cli/agentmanager"
 	"github.com/hostedgraphite/hg-cli/agentmanager/utils"
+	"github.com/hostedgraphite/hg-cli/pipeline"
 	"github.com/hostedgraphite/hg-cli/sysinfo"
 	cliUtils "github.com/hostedgraphite/hg-cli/utils"
 
-	"github.com/charmbracelet/huh/spinner"
 	"github.com/spf13/cobra"
 )
 
@@ -67,34 +66,25 @@ func validateArgs(args []string) error {
 	return err
 }
 
-func execute(agentName string, sysinfo sysinfo.SysInfo) error {
+func execute(agentName string, sysInfo sysinfo.SysInfo) error {
 	var err error
 
-	agent := agentmanager.GetAgent(agentName)
-	updates := make(chan string)
-
-	go func() {
-		defer close(updates)
-		err = agent.Uninstall(sysinfo, updates)
-		if err != nil {
-			updates <- fmt.Sprintf("error uninstalling agent: %v", err)
-			return
-		}
-	}()
-
-	err = spinner.New().Title("Uninstall In Progress...").Action(func() {
-		for msg := range updates {
-			fmt.Print("\r")
-			fmt.Print("\033[K")
-			fmt.Println(msg)
-			if strings.HasPrefix(msg, "error") || strings.HasPrefix(msg, "Completed") {
-				break
-			}
-		}
-	}).Run()
-
+	agent := agentmanager.NewAgent(agentName, nil, sysInfo)
+	updates := make(chan *pipeline.Pipe)
+	uninstallPipeline, err := agent.UninstallPipeline(updates)
 	if err != nil {
-		return fmt.Errorf("error uninstalling agent: %v", err)
+		return err
+	}
+
+	runner := pipeline.NewRunner(
+		uninstallPipeline,
+		true,
+		updates,
+	)
+
+	err = runner.Run()
+	if err != nil {
+		return err
 	}
 
 	return err

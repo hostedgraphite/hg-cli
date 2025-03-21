@@ -111,3 +111,44 @@ func graphiteOutputUpdate(apikey, configPath string) error {
 
 	return nil
 }
+
+func (t *Telegraf) UninstallPipeline(updates chan *pipeline.Pipe) (*pipeline.Pipeline, error) {
+	var err error
+	var sysInfo = t.sysinfo
+	var pipes []*pipeline.Pipe
+
+	switch sysInfo.Os {
+	case "linux":
+		pipes = telegrafPipes.LinuxUninstallPipes(sysInfo)
+	case "darwin":
+		pipes = telegrafPipes.DarwinUninstallPipes(sysInfo)
+	case "windows":
+		pipes, err = telegrafPipes.WindowsUninstallPipes()
+		if err != nil {
+			return nil, err
+		}
+	default:
+		return nil, fmt.Errorf("unsupported operating system: %v", err)
+	}
+
+	pipeline := pipeline.NewPipeline(fmt.Sprintf("Uninstalling Telegraf Agent (%s-%s)", sysInfo.Os, sysInfo.PkgMngr), pipes, updates)
+
+	return &pipeline, err
+}
+
+func (t *Telegraf) UpdateApiKeyPipeline(updates chan *pipeline.Pipe) (*pipeline.Pipeline, error) {
+	var err error
+	var sysInfo = t.sysinfo
+	var pipes []*pipeline.Pipe
+
+	switch sysInfo.Os {
+	case "linux", "darwin", "windows":
+		pipes = t.graphiteOutputUpdatePipe()
+	default:
+		return nil, fmt.Errorf("unsupported operating system: %v", err)
+	}
+
+	pipeline := pipeline.NewPipeline(fmt.Sprintf("Updating HostedGraphite Api Key (%s-%s)", sysInfo.Os, sysInfo.PkgMngr), pipes, updates)
+
+	return &pipeline, err
+}

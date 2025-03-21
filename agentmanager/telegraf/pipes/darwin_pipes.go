@@ -68,3 +68,33 @@ func macDmgInstallPipes(arch string) []*pipeline.Pipe {
 	return pipes
 
 }
+
+func DarwinUninstallPipes(sysinfo sysinfo.SysInfo) []*pipeline.Pipe {
+	var pipes []*pipeline.Pipe
+	pkgMngr := sysinfo.PkgMngr
+
+	if pkgMngr == "brew" {
+		pipes = BrewUninstallPipes()
+	} else {
+		pipes = macDmgUninstallPipes()
+	}
+
+	return pipes
+}
+
+func macDmgUninstallPipes() []*pipeline.Pipe {
+	appPath := "/Applications/Telegraf.app"
+
+	pipes := []*pipeline.Pipe{
+		{
+			Name: "Removing Telegraf From Applications",
+			Cmd:  exec.Command("rm", "-rf", appPath),
+		},
+		{
+			Name: "Removing Telegraf Binary",
+			Cmd:  exec.Command("rm", "/usr/local/bin/telegraf"),
+		},
+	}
+
+	return pipes
+}

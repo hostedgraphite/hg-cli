@@ -14,8 +14,6 @@ github.com/charmbracelet/harmonica v0.2.0 h1:8NxJWRWg/bzKqqEaaeFNipOu77YR5t8aSwG
 github.com/charmbracelet/harmonica v0.2.0/go.mod h1:KSri/1RMQOZLbw7AHqgcBycp8pgJnQMYYT8QZRqZ1Ao=
 github.com/charmbracelet/huh v0.6.1-0.20250310115732-9b4438c58c9e h1:rluRrNdbZxIQICzW/fDO/VTgt4KLYyFQM8R6Sh9P9Jc=
 github.com/charmbracelet/huh v0.6.1-0.20250310115732-9b4438c58c9e/go.mod h1:KxTA8VTYA9RZqxcFZBnRLKNpCwHfu3fz0gNtjANA9Z4=
-github.com/charmbracelet/huh/spinner v0.0.0-20250305131932-4a188eb1ecab h1:IHqC0aFYwObgRFCSMtUy9P5n+1yC41Ig5NmNzQY3r00=
-github.com/charmbracelet/huh/spinner v0.0.0-20250305131932-4a188eb1ecab/go.mod h1:tACSCeRBPLCLt1Yeto6Wnap6993yHh0HjshOXyPnjuM=
 github.com/charmbracelet/lipgloss v1.0.0 h1:O7VkGDvqEdGi93X+DeqsQ7PKHDgtQfF8j8/O2qFMQNg=
 github.com/charmbracelet/lipgloss v1.0.0/go.mod h1:U5fy9Z+C38obMs+T+tJqst9VGzlOYGj4ri9reL3qUlo=
 github.com/charmbracelet/log v0.4.1 h1:6AYnoHKADkghm/vt4neaNEXkxcXLSV2g1rdyFDOpTyk=

@@ -118,6 +118,7 @@ func (a *AgentConfigView) Update(msg tea.Msg) (types.View, tea.Cmd) {
 				path = a.serviceSettings["configPath"]
 			}
 			options["config"] = path
+			options["apikey"] = a.apiKey
 		case "Uninstall":
 			if !a.form.GetBool("confirm") {
 				return a, tea.Quit
@@ -237,6 +238,9 @@ func updateAPIKeyGroup(header, apikey, path, defaultPath string) *huh.Group {
 			Description("The default location is already populated. If the path is different please update below.").
 			Placeholder(defaultPath).
 			Validate(func(s string) error {
+				if s == "" {
+					s = defaultPath
+				}
 				err := telegraf.ValidateFilePath(s)
 				if err != nil {
 					return err
