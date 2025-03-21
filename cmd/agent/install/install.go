@@ -28,7 +28,7 @@ func InstallCmd(sysinfo sysinfo.SysInfo) *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:           "install <agent>",
-		Short:         "Installing a monitoring agent.",
+		Short:         "Install a monitoring agent.",
 		Long:          "Install a moniting agent. Use --custom for custom installation",
 		SilenceErrors: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
@@ -73,7 +73,7 @@ func InstallCmd(sysinfo sysinfo.SysInfo) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&apikey, "api-key", "", "Your Hosted Graphite API key (required)")
-	cmd.Flags().StringSliceVar(&plugins, "plugins", []string{}, "The plugins to install")
+	cmd.Flags().StringSliceVar(&plugins, "plugins", []string{}, "List of plugins to include during install (comma separated)")
 
 	return cmd
 }

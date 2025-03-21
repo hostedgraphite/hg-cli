@@ -23,7 +23,7 @@ var (
 
 var defaultCallToAction = `
 To view your metrics, head back to your account, and a dashboard will be automatically added shortly.
-For more information on using the hg-cli, visit the documentation:
+For more information on using the hg-cli, check our documentation:
 https://docs.hostedgraphite.com/hg-cli
 `
 
@@ -60,7 +60,7 @@ func GenerateSummary(action ActionSummary, width, height int) string {
 		ctoaction = uninstallCallToAction
 	}
 
-	footer := s.Footer.Render("Thank you for using MetriFire! 🔥 \n(Press q or ctrl+c to quit)")
+	footer := s.Footer.Render("Thank you for using MetricFire! 🔥 \n(Press q or ctrl+c to quit)")
 
 	tmpl, err := template.New("summary").Parse(`
 {{.ActionTitle}}
@@ -93,12 +93,12 @@ func GenerateSummary(action ActionSummary, width, height int) string {
 		"ActionTitle":    s.Action.Render(title),
 		"Action":         action.Action,
 		"Success":        action.Success,
-		"SuccessMessage": s.Status.Render(fmt.Sprintf("Success! - %s did %s successfully", action.Agent, action.Action)),
+		"SuccessMessage": s.Status.Render(fmt.Sprintf("Success! - %s complete", action.Action)),
 		"Plugins":        s.Base.Render(s.KeyWord.Render("Plugins: ") + s.Items.Render(strings.Join(action.Plugins, ", "))),
 		"Config":         s.Base.Render(s.KeyWord.Render("Config Location: ") + s.Items.Render(action.Config)),
 		"StartCmd":       s.Base.Render(s.KeyWord.Render("Start Cmd: ") + s.Items.Render(action.StartCmd)),
 		"RestartCmd":     s.Base.Render(s.KeyWord.Render("Restart Cmd: ") + s.Items.Render(action.RestartCmd)),
-		"FailureMessage": s.Status.Render(fmt.Sprintf("Failure - %s did not %s successfully\n", action.Agent, action.Action)),
+		"FailureMessage": s.Status.Render(fmt.Sprintf("Warning! - %s failed", action.Action)),
 		"Error":          s.Base.Render(s.KeyWord.Render("Errors: ") + s.Items.Render(action.Error)),
 	}
 
