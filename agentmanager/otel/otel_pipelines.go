@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
 	otelPipes "github.com/hostedgraphite/hg-cli/agentmanager/otel/pipes"
 	"github.com/hostedgraphite/hg-cli/agentmanager/utils"
@@ -94,8 +95,8 @@ func graphiteOutputUpdate(apikey, configPath string) error {
 	}
 
 	updates := map[string]string{
-		`<HG-API-KEY>.*`: fmt.Sprintf(`"%s.opentel.$$$$0"`, apikey),
-		`<HOSTNAME>.*`:   hostname,
+		`<HG-API-KEY>.*`: fmt.Sprintf(`"%s.opentel."`, apikey), // Works without regex issues
+		`<HOSTNAME>`:     hostname,
 	}
 
 	updatedConfig, err := utils.UpdateConfigBlock(configYaml, graphiteBlock, updates)
@@ -103,6 +104,9 @@ func graphiteOutputUpdate(apikey, configPath string) error {
 	if err != nil {
 		return fmt.Errorf("error during updating: %v", err)
 	}
+
+	// $$ causes issued with regex as it's seen as an escape character.
+	updatedConfig = strings.ReplaceAll(updatedConfig, "opentel.", "opentel.$$0")
 
 	err = os.WriteFile(configPath, []byte(updatedConfig), 0644)
 
