@@ -3,6 +3,7 @@ package agentmanager
 import (
 	"strings"
 
+	"github.com/hostedgraphite/hg-cli/agentmanager/otel"
 	"github.com/hostedgraphite/hg-cli/agentmanager/telegraf"
 	"github.com/hostedgraphite/hg-cli/sysinfo"
 )
@@ -20,6 +21,8 @@ func NewAgent(agentName string, options map[string]interface{}, sysInfo sysinfo.
 	switch strings.ToLower(agentName) {
 	case "telegraf":
 		return telegraf.NewTelegrafAgent(options, sysInfo)
+	case "otel":
+		return otel.NewOtelAgent(options, sysInfo)
 	default:
 		return nil
 	}

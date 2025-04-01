@@ -1,0 +1,43 @@
+receivers:
+  hostmetrics:
+    collection_interval: 30s
+    scrapers:
+      cpu: {}
+      memory: {}
+      load: {}
+      filesystem: {}
+      disk: {}
+      paging: {}
+      network: {}
+      processes: {}
+      process: {}
+      system: {}
+
+processors:
+  batch: {}
+  metricstransform:
+    transforms:
+      - include: ".*"
+        match_type: regexp
+        action: update
+        new_name: <HG-API-KEY>
+        operations:
+          - action: add_label
+            new_label: host
+            new_value: <HOSTNAME>
+
+exporters:
+  carbon:
+    endpoint: "carbon.hostedgraphite.com:2003"
+    timeout: 10s
+
+service:
+  pipelines:
+    metrics:
+      receivers:
+        - hostmetrics
+      processors:
+        - batch
+        - metricstransform
+      exporters:
+        - carbon
