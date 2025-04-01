@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/hostedgraphite/hg-cli/agentmanager"
+	"github.com/hostedgraphite/hg-cli/agentmanager/otel"
 	"github.com/hostedgraphite/hg-cli/agentmanager/telegraf"
 	"github.com/hostedgraphite/hg-cli/agentmanager/utils"
 	"github.com/hostedgraphite/hg-cli/formatters"
@@ -90,18 +91,26 @@ func validateArgs(args, plugins []string) error {
 func execute(apikey, agentName string, plugins []string, sysInfo sysinfo.SysInfo) error {
 	var err error
 	var selectedPlugins []string
-
-	if len(plugins) == 0 {
-		selectedPlugins = telegraf.DefaultTelegrafPlugins
-	} else {
-		selectedPlugins = plugins
-	}
+	var serviceSettings map[string]string
 
 	options := map[string]interface{}{
 		"plugins": selectedPlugins,
 		"apikey":  apikey,
 	}
-	serviceSettings := telegraf.GetServiceSettings(sysInfo.Os, sysInfo.Arch, sysInfo.PkgMngr)
+
+	switch agentName {
+	case "telegraf":
+		serviceSettings = telegraf.GetServiceSettings(sysInfo.Os, sysInfo.Arch, sysInfo.PkgMngr)
+		if len(plugins) == 0 {
+			selectedPlugins = telegraf.DefaultTelegrafPlugins
+		} else {
+			selectedPlugins = plugins
+		}
+	case "otel":
+		serviceSettings = otel.GetServiceSettings(sysInfo.Os, sysInfo.Arch, sysInfo.PkgMngr)
+		selectedPlugins = otel.DefaultConfig
+	}
+
 	agent := agentmanager.NewAgent(agentName, options, sysInfo)
 
 	// Build the pipeline
