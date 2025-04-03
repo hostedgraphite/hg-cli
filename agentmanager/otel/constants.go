@@ -13,4 +13,12 @@ var ServiceDetails = map[string]map[string]map[string]string{
 			"restartHint": "sudo systemctl restart otelcol-contrib",
 		},
 	},
+	"windows": {
+		"default": {
+			"exePath":     "C:\\Program Files\\OpenTelemetry Collector Contrib\\otelcol-contrib.exe",
+			"configPath":  "C:\\Program Files\\OpenTelemetry Collector Contrib\\config.yaml",
+			"startHint":   "sc.exe start otelcol-contrib",
+			"restartHint": "sc.exe restart otelcol-contrib",
+		},
+	},
 }

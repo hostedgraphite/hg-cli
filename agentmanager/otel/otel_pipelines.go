@@ -24,6 +24,11 @@ func (o *Otel) InstallPipeline(updates chan *pipeline.Pipe) (*pipeline.Pipeline,
 	switch sysInfo.Os {
 	case "linux":
 		pipes = otelPipes.LinuxInstallPipes(sysInfo)
+	case "windows":
+		pipes, err = otelPipes.WindowsInstallPipes(sysInfo)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	configPipes, err := o.configPipeline()
@@ -48,6 +53,10 @@ func (o *Otel) InstallPipeline(updates chan *pipeline.Pipe) (*pipeline.Pipeline,
 func (o *Otel) configPipeline() ([]*pipeline.Pipe, error) {
 	var err error
 	var pipes []*pipeline.Pipe
+
+	if o.sysinfo.Os == "windows" {
+		pipes = otelPipes.WindowsConfigPipes(o.options, o.serviceSettings)
+	}
 
 	updatePipe := o.graphiteOutputUpdatePipe()
 
