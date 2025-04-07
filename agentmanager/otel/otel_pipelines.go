@@ -165,6 +165,16 @@ func (o *Otel) UpdateApiKeyPipeline(updates chan *pipeline.Pipe) (*pipeline.Pipe
 	var err error
 	var sysInfo = o.sysinfo
 	var pipes []*pipeline.Pipe
+
+	switch sysInfo.Os {
+	case "linux", "darwin", "windows":
+		pipes = o.graphiteOutputUpdatePipe()
+	default:
+		return nil, fmt.Errorf("unsupported operating system: %v", err)
+	}
+
 	pipeline := pipeline.NewPipeline(fmt.Sprintf("Updating HostedGraphite Api Key (%s-%s)", sysInfo.Os, sysInfo.PkgMngr), pipes, updates)
+
 	return &pipeline, err
+
 }
