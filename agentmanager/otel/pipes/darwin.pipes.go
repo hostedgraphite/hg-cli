@@ -20,7 +20,7 @@ func DarwinInstallPipes(sysInfo sysinfo.SysInfo) []*pipeline.Pipe {
 	}
 	release := fmt.Sprintf("otelcol-contrib_%s_darwin_%s.tar.gz", latest[1:], arch)
 	url := "https://github.com/open-telemetry/opentelemetry-collector-releases/releases/download/" + latest + "/" + release
-    tmpDir := "/tmp/hg-cli"
+	tmpDir := "/tmp/hg-cli"
 
 	pipes = []*pipeline.Pipe{
 		{
@@ -73,9 +73,9 @@ func DarwinInstallPipes(sysInfo sysinfo.SysInfo) []*pipeline.Pipe {
 }
 
 func DarwinConfigPipes(options map[string]interface{}, serviceSettings map[string]string, plistFile string) []*pipeline.Pipe {
-    plistPath := "/usr/local/etc/otelcol-contrib/com.otelcol-contrib-agent.plist"
-    homeDir := os.Getenv("HOME")
-    plistDest := homeDir + "/Library/LaunchAgents/com.otelcol-contrib-agent.plist"
+	plistPath := "/usr/local/etc/otelcol-contrib/com.otelcol-contrib-agent.plist"
+	homeDir := os.Getenv("HOME")
+	plistDest := homeDir + "/Library/LaunchAgents/com.otelcol-contrib-agent.plist"
 
 	pipes := []*pipeline.Pipe{
 		{
@@ -111,8 +111,56 @@ func DarwinConfigPipes(options map[string]interface{}, serviceSettings map[strin
 			Name: "Moving Plist File to Launch Daemons",
 			Cmd: exec.Command(
 				"mv",
-                plistPath,
-                plistDest,
+				plistPath,
+				plistDest,
+			),
+		},
+	}
+
+	return pipes
+}
+
+func DarwinUninstallPipes() []*pipeline.Pipe {
+	homeDir := os.Getenv("HOME")
+	plistPath := homeDir + "/Library/LaunchAgents/com.otelcol-contrib-agent.plist"
+
+	pipes := []*pipeline.Pipe{
+		{
+			Name: "Stopping Otel-Contrib Agent",
+			Cmd: exec.Command(
+				"launchctl",
+				"stop",
+				"com.otelcol-contrib-agent",
+			),
+		},
+		{
+			Name: "Unloading Otel-Contrib Agent",
+			Cmd: exec.Command(
+				"launchctl",
+				"unload",
+				plistPath,
+			),
+		},
+		{
+			Name: "Removing Otel-Contrib Agent Plist File",
+			Cmd: exec.Command(
+				"rm",
+				plistPath,
+			),
+		},
+		{
+			Name: "Removing Otel-Contrib Config Directory",
+			Cmd: exec.Command(
+				"rm",
+				"-rf",
+				"/usr/local/etc/otelcol-contrib",
+			),
+		},
+		{
+			Name: "Removing Otel-Contrib Binary",
+			Cmd: exec.Command(
+				"rm",
+				"/usr/local/bin/otelcol-contrib",
 			),
 		},
 	}

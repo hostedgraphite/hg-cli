@@ -137,7 +137,21 @@ func (o *Otel) UninstallPipeline(updates chan *pipeline.Pipe) (*pipeline.Pipelin
 	var err error
 	var sysInfo = o.sysinfo
 	var pipes []*pipeline.Pipe
-	pipeline := pipeline.NewPipeline(fmt.Sprintf("Uninstalling Otel Agent (%s-%s)", sysInfo.Os, sysInfo.PkgMngr), pipes, updates)
+
+	switch sysInfo.Os {
+	case "darwin":
+		pipes = otelPipes.DarwinUninstallPipes()
+	}
+
+	pipeline := pipeline.NewPipeline(
+		fmt.Sprintf("Uninstalling Otel Agent (%s-%s)",
+			sysInfo.Os,
+			sysInfo.PkgMngr,
+		),
+		pipes,
+		updates,
+	)
+
 	return &pipeline, err
 }
 func (o *Otel) UpdateApiKeyPipeline(updates chan *pipeline.Pipe) (*pipeline.Pipeline, error) {
