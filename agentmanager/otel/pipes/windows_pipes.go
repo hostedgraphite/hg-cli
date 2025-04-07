@@ -103,3 +103,34 @@ func isInstalledWindows() bool {
 
 	return false
 }
+
+func WindowsUninstallPipes(sysInfo sysinfo.SysInfo) ([]*pipeline.Pipe, error) {
+	shell := determineShell()
+	if !isInstalledWindows() {
+		return nil, fmt.Errorf("no exe found - Unable to remove service")
+	}
+
+	pipes := []*pipeline.Pipe{
+		{
+			Name: "Stopping otelcontribcol service",
+			Cmd: exec.Command(
+				shell,
+				"-Command",
+				"sc.exe",
+				"stop",
+				"otelcol-contrib",
+			),
+		},
+		{
+			Name: "Uninstalling otelcontribcol service",
+			Cmd: exec.Command(
+				shell,
+				"-Command",
+				"sc.exe",
+				"delete",
+				"otelcol-contrib",
+			),
+		},
+	}
+	return pipes, nil
+}
