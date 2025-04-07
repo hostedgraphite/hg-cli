@@ -141,6 +141,13 @@ func (o *Otel) UninstallPipeline(updates chan *pipeline.Pipe) (*pipeline.Pipelin
 	switch sysInfo.Os {
 	case "darwin":
 		pipes = otelPipes.DarwinUninstallPipes()
+	case "linux":
+		pipes = otelPipes.LinxUninstallPipes(sysInfo)
+	case "windows":
+		pipes, err = otelPipes.WindowsUninstallPipes(sysInfo)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	pipeline := pipeline.NewPipeline(

@@ -66,3 +66,49 @@ func yumInstallPipes() []*pipeline.Pipe {
 	}
 	return pipes
 }
+
+func LinxUninstallPipes(sysInfo sysinfo.SysInfo) []*pipeline.Pipe {
+	var pipes []*pipeline.Pipe
+	pkgMngr := sysInfo.PkgMngr
+
+	if pkgMngr == "apt" {
+		pipes = linuxDebUninstall()
+	} else if pkgMngr == "yum" || pkgMngr == "dnf" {
+		pipes = linuxRpmUninstall()
+		return pipes
+	} else {
+		return pipes
+	}
+
+	return pipes
+}
+
+func linuxDebUninstall() []*pipeline.Pipe {
+	pipes := []*pipeline.Pipe{
+		{
+			Name: "Uninstalling Otel-Contrib",
+			Cmd: exec.Command(
+				"dpkg",
+				"-r",
+				"otelcol-contrib",
+			),
+		},
+	}
+
+	return pipes
+}
+
+func linuxRpmUninstall() []*pipeline.Pipe {
+	pipes := []*pipeline.Pipe{
+		{
+			Name: "Uninstalling Otel-Contrib",
+			Cmd: exec.Command(
+				"rpm",
+				"-e",
+				"otelcol-contrib",
+			),
+		},
+	}
+
+	return pipes
+}
