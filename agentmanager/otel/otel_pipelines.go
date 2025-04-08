@@ -19,6 +19,9 @@ var configYaml []byte
 //go:embed com.otelcol-contrib-agent.plist
 var plistFile []byte
 
+//go:embed systemd.conf
+var systemdFile []byte
+
 func (o *Otel) InstallPipeline(updates chan *pipeline.Pipe) (*pipeline.Pipeline, error) {
 	var err error
 	var sysInfo = o.sysinfo
@@ -63,6 +66,8 @@ func (o *Otel) configPipeline() ([]*pipeline.Pipe, error) {
 		pipes = otelPipes.WindowsConfigPipes(o.options, o.serviceSettings)
 	} else if o.sysinfo.Os == "darwin" {
 		pipes = otelPipes.DarwinConfigPipes(o.options, o.serviceSettings, string(plistFile))
+	} else if o.sysinfo.Os == "linux" && o.sysinfo.PkgMngr == "" {
+		pipes = otelPipes.LinuxManualConfigPipes(o.options, o.serviceSettings, string(systemdFile))
 	}
 
 	updatePipe := o.graphiteOutputUpdatePipe()
