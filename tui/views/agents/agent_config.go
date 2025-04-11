@@ -1,14 +1,12 @@
 package agents
 
 import (
+	"github.com/hostedgraphite/hg-cli/agentmanager/otel"
 	"github.com/hostedgraphite/hg-cli/agentmanager/telegraf"
 
 	"github.com/hostedgraphite/hg-cli/styles"
 	"github.com/hostedgraphite/hg-cli/sysinfo"
 	"github.com/hostedgraphite/hg-cli/tui/types"
-	"github.com/hostedgraphite/hg-cli/tui/views/config"
-
-	"github.com/hostedgraphite/hg-cli/utils"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/huh"
@@ -25,19 +23,31 @@ type AgentConfigView struct {
 }
 
 func NewAgentConfigView(agent, action string, sysInfo sysinfo.SysInfo) *AgentConfigView {
+	var err error
 	var actionGroup *huh.Group
-	var apikey, selectedInstall, path string
-	var selectedPlugins []string
-	var confirmUninstall bool
-	settings := telegraf.GetServiceSettings(sysInfo.Os, sysInfo.Arch, sysInfo.PkgMngr)
+	var settings map[string]string
+	switch agent {
+	case "Telegraf":
+		settings = telegraf.GetServiceSettings(sysInfo.Os, sysInfo.Arch, sysInfo.PkgMngr)
+	case "Otel", "OpenTelemetry":
+		settings = otel.GetServiceSettings(sysInfo.Os, sysInfo.Arch, sysInfo.PkgMngr)
+	}
 
-	header := getHeader(agent)
-	if action == "Install" {
-		actionGroup = installGroup(header, agent, apikey, selectedInstall, selectedPlugins)
-	} else if action == "Update Api Key" {
-		actionGroup = updateAPIKeyGroup(header, apikey, path, settings["configPath"])
-	} else if action == "Uninstall" {
-		actionGroup = uninstallGroup(header, confirmUninstall)
+	agentViews := NewAgentsFields(agent)
+
+	switch action {
+	case "Install":
+		actionGroup, err = agentViews.InstallView()
+	case "Uninstall":
+		actionGroup, err = agentViews.UninstallView()
+	case "Update Api Key":
+		actionGroup, err = agentViews.UpdateApiKeyView(settings["configPath"])
+	default:
+		return nil
+	}
+
+	if err != nil {
+		return nil
 	}
 
 	form := huh.NewForm(actionGroup).
@@ -50,7 +60,6 @@ func NewAgentConfigView(agent, action string, sysInfo sysinfo.SysInfo) *AgentCon
 		form:            form,
 		agent:           agent,
 		action:          action,
-		apiKey:          apikey,
 		sysInfo:         sysInfo,
 		serviceSettings: settings,
 	}
@@ -97,13 +106,7 @@ func (a *AgentConfigView) Update(msg tea.Msg) (types.View, tea.Cmd) {
 		options["apikey"] = a.apiKey
 		switch a.action {
 		case "Install":
-			// Install agent
-			// Next few steps are in the cases where the options aren't binded to the stuct fields
-			// This also sets the default values for the Telegraf default install option.
-			installType := a.form.GetString("installType")
-			if installType == "Default" && a.agent == "Telegraf" {
-				options["plugins"] = telegraf.DefaultTelegrafPlugins
-			} else {
+			if a.agent == "Telegraf" {
 				plugins := a.form.Get("plugins")
 				if val, ok := plugins.([]string); ok && len(val) > 0 {
 					a.selectedPlugins = val
@@ -112,15 +115,13 @@ func (a *AgentConfigView) Update(msg tea.Msg) (types.View, tea.Cmd) {
 			}
 
 		case "Update Api Key":
-			// Update agent
 			path := a.form.GetString("path")
 			if path == "" {
 				path = a.serviceSettings["configPath"]
 			}
 			options["config"] = path
-			options["apikey"] = a.apiKey
 		case "Uninstall":
-			if !a.form.GetBool("confirm") {
+			if !a.form.GetBool("confirmUninstall") {
 				return a, tea.Quit
 			}
 		}
@@ -145,124 +146,4 @@ func (a *AgentConfigView) View() string {
 			a.sysInfo.Height,
 			(styles.DefaultStyles().Page.Render(a.form.View())))
 	}
-}
-
-func getHeader(agent string) string {
-	switch agent {
-	case "Telegraf":
-		return styles.MfAndTelegrafTitle
-	default:
-		return styles.MetricfireLogo
-	}
-}
-
-func installGroup(header, agent, apikey, selectedInstall string, selectedPlugins []string) *huh.Group {
-
-	actionGroup := huh.NewGroup(
-		huh.NewNote().
-			Title(header),
-
-		huh.NewInput().
-			Key("apikey").
-			Title("Enter your Hosted Graphite API KEY").
-			Prompt("API Key: ").
-			Validate(func(s string) error {
-				err := utils.ValidateAPIKey(apikey)
-				if err != nil {
-					return err
-				}
-				return nil
-			}).
-			Value(&apikey).
-			EchoMode(huh.EchoModePassword),
-
-		huh.NewSelect[string]().
-			Key("installType").
-			Title("Select Install Type").
-			Options(huh.NewOptions("Default", "Custom")...).
-			Value(&selectedInstall),
-
-		huh.NewMultiSelect[string]().
-			Key("plugins").
-			Title("Select Plugins").
-			Value(&selectedPlugins).
-			OptionsFunc(func() []huh.Option[string] {
-				switch agent {
-				case "Telegraf":
-					switch selectedInstall {
-					case "Custom":
-						plugins, err := config.LoadPlugins()
-						if err != nil {
-							return nil
-						}
-						return huh.NewOptions(plugins.Plugins...)
-					default:
-						return []huh.Option[string]{
-							huh.NewOption(
-								"Install: CPU, Disk, Diskio, Kernel, Mem, Processes, Swap, System", "default",
-							).Selected(true)}
-					}
-				default:
-					return nil
-
-				}
-			}, &selectedInstall),
-	)
-
-	return actionGroup
-}
-
-func updateAPIKeyGroup(header, apikey, path, defaultPath string) *huh.Group {
-	actionGroup := huh.NewGroup(
-		huh.NewNote().
-			Title(header),
-
-		huh.NewInput().
-			Key("apikey").
-			Title("Enter your new Hosted Graphite API KEY").
-			Prompt("API Key: ").
-			Validate(func(s string) error {
-				err := utils.ValidateAPIKey(apikey)
-				if err != nil {
-					return err
-				}
-				return nil
-			}).
-			Value(&apikey).
-			EchoMode(huh.EchoModePassword),
-
-		huh.NewInput().
-			Title("Enter the file path").
-			Key("path").
-			Prompt("Path: ").
-			Description("The default location is already populated. If the path is different please update below.").
-			Placeholder(defaultPath).
-			Validate(func(s string) error {
-				if s == "" {
-					s = defaultPath
-				}
-				err := telegraf.ValidateFilePath(s)
-				if err != nil {
-					return err
-				}
-				return nil
-			}).
-			Value(&path),
-	)
-
-	return actionGroup
-}
-
-func uninstallGroup(header string, confirmUninstall bool) *huh.Group {
-	actionGroup := huh.NewGroup(
-		huh.NewNote().
-			Title(header),
-		huh.NewConfirm().
-			Key("confirm").
-			Title("Are you sure you want to uninstall?").
-			Description("This will remove the agent and all its configurations.").
-			Value(&confirmUninstall),
-	)
-
-	return actionGroup
 }

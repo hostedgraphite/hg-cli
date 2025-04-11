@@ -14,7 +14,7 @@ import (
 )
 
 var agents = []string{"Telegraf", "OpenTelemetry"}
-var commingSoon = []string{"OpenTelemetry"}
+var commingSoon = []string{""}
 var agentActions = []string{"Install", "Update Api Key", "Uninstall"}
 
 type AgentsView struct {

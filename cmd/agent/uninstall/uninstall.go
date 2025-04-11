@@ -69,6 +69,7 @@ func validateArgs(args []string) error {
 
 func execute(agentName string, sysInfo sysinfo.SysInfo) error {
 	var err error
+	var summary formatters.SummaryContent
 
 	agent := agentmanager.NewAgent(agentName, nil, sysInfo)
 	updates := make(chan *pipeline.Pipe)
@@ -88,10 +89,21 @@ func execute(agentName string, sysInfo sysinfo.SysInfo) error {
 		return err
 	}
 
-	summary := formatters.ActionSummary{
+	data := formatters.ActionSummary{
 		Agent:   agentName,
 		Success: true,
 		Action:  "Uninstall",
+	}
+
+	switch agentName {
+	case "telegraf":
+		summary = &formatters.TelegrafSummary{
+			ActionSummary: data,
+		}
+	case "otel":
+		summary = &formatters.OtelContribSummary{
+			ActionSummary: data,
+		}
 	}
 
 	fmt.Println(formatters.GenerateCliSummary(summary))

@@ -141,33 +141,68 @@ func (a *AgentRunner) Update(msg tea.Msg) (types.View, tea.Cmd) {
 }
 
 func (a *AgentRunner) View() string {
-	var summary formatters.ActionSummary
-
+	var summary formatters.SummaryContent
 	if a.runner != nil {
 		if a.runner.Pipeline.IsCompleted() {
 			switch a.action {
 			case "Install":
-				summary = formatters.ActionSummary{
-					Agent:    a.agent,
-					Success:  a.runner.Pipeline.Success(),
-					Action:   a.action,
-					Plugins:  a.options["plugins"].([]string),
-					Config:   a.serviceSettings["configPath"],
-					StartCmd: a.serviceSettings["startHint"],
+				if a.agent == "Telegraf" {
+					summary = &formatters.TelegrafSummary{
+						ActionSummary: formatters.ActionSummary{
+							Agent:    a.agent,
+							Success:  a.runner.Pipeline.Success(),
+							Action:   a.action,
+							Config:   a.serviceSettings["configPath"],
+							StartCmd: a.serviceSettings["startHint"],
+						},
+						Plugins: a.options["plugins"].([]string),
+					}
+				} else if a.agent == "OpenTelemetry" {
+					summary = &formatters.OtelContribSummary{
+						ActionSummary: formatters.ActionSummary{
+							Agent:    a.agent,
+							Success:  a.runner.Pipeline.Success(),
+							Action:   a.action,
+							Config:   a.serviceSettings["configPath"],
+							StartCmd: a.serviceSettings["startHint"],
+						},
+						Receiver: "hostmetrics",
+						Exporter: "carbon",
+					}
 				}
 			case "Update Api Key":
-				summary = formatters.ActionSummary{
+				data := formatters.ActionSummary{
 					Agent:      a.agent,
 					Success:    a.runner.Pipeline.Success(),
 					Action:     a.action,
 					Config:     a.options["config"].(string),
 					RestartCmd: a.serviceSettings["restartHint"],
 				}
+
+				if a.agent == "Telegraf" {
+					summary = &formatters.TelegrafSummary{
+						ActionSummary: data,
+					}
+				} else if a.agent == "OpenTelemetry" {
+					summary = &formatters.OtelContribSummary{
+						ActionSummary: data,
+					}
+				}
 			case "Uninstall":
-				summary = formatters.ActionSummary{
+				data := formatters.ActionSummary{
 					Agent:   a.agent,
 					Success: a.runner.Pipeline.Success(),
 					Action:  a.action,
+				}
+
+				if a.agent == "Telegraf" {
+					summary = &formatters.TelegrafSummary{
+						ActionSummary: data,
+					}
+				} else if a.agent == "OpenTelemetry" {
+					summary = &formatters.OtelContribSummary{
+						ActionSummary: data,
+					}
 				}
 			}
 		} else {
