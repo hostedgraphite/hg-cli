@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/huh"
+	"github.com/hostedgraphite/hg-cli/agentmanager/otel"
 	"github.com/hostedgraphite/hg-cli/agentmanager/telegraf"
 	"github.com/hostedgraphite/hg-cli/styles"
 	"github.com/hostedgraphite/hg-cli/tui/views/config"
@@ -19,7 +20,7 @@ type Telegraf struct {
 	header           string
 }
 
-func (t *Telegraf) InstallView(apikey, selectedInstall string, selectedPlugins []string) (*huh.Group, error) {
+func (t *Telegraf) InstallView() (*huh.Group, error) {
 	installGroup := huh.NewGroup(
 		huh.NewNote().
 			Title(t.header),
@@ -69,7 +70,7 @@ func (t *Telegraf) InstallView(apikey, selectedInstall string, selectedPlugins [
 
 	return installGroup, nil
 }
-func (t *Telegraf) UninstallView(confirm bool) (*huh.Group, error) {
+func (t *Telegraf) UninstallView() (*huh.Group, error) {
 	uninstallGroup := huh.NewGroup(
 		huh.NewNote().
 			Title(t.header),
@@ -82,7 +83,7 @@ func (t *Telegraf) UninstallView(confirm bool) (*huh.Group, error) {
 
 	return uninstallGroup, nil
 }
-func (t *Telegraf) UpdateApiKeyView(apikey, path, defaultPath string) (*huh.Group, error) {
+func (t *Telegraf) UpdateApiKeyView(defaultPath string) (*huh.Group, error) {
 
 	updateGroup := huh.NewGroup(
 		huh.NewNote().
@@ -124,11 +125,91 @@ func (t *Telegraf) UpdateApiKeyView(apikey, path, defaultPath string) (*huh.Grou
 	return updateGroup, nil
 }
 
-type Otel struct{}
+type Otel struct {
+	apikey           string
+	header           string
+	path             string
+	confirmUninstall bool
+}
 
-func (o *Otel) InstallView()      {}
-func (o *Otel) UninstallView()    {}
-func (o *Otel) UpdateApiKeyView() {}
+func (o *Otel) InstallView() (*huh.Group, error) {
+	installGroup := huh.NewGroup(
+		huh.NewNote().
+			Title(o.header),
+
+		huh.NewNote().
+			Title("Currently OpenTelemetry will be install with 'hostmetrics' as a receiver and 'carbon' as a exporter."),
+
+		huh.NewInput().
+			Key("apikey").
+			Title("Enter your Hosted Graphite API key").
+			Prompt("API Key: ").
+			Validate(func(s string) error {
+				err := utils.ValidateAPIKey(o.apikey)
+				if err != nil {
+					return err
+				}
+				return nil
+			}).
+			Value(&o.apikey).
+			EchoMode(huh.EchoModePassword),
+	)
+	return installGroup, nil
+}
+func (o *Otel) UninstallView() (*huh.Group, error) {
+	uninstallGroup := huh.NewGroup(
+		huh.NewNote().
+			Title(o.header),
+		huh.NewConfirm().
+			Key("confirmUninstall").
+			Title("Are you sure you want to uninstall OpenTelemetry?").
+			Description("This will remove the agent, but not the configuration files").
+			Value(&o.confirmUninstall),
+	)
+
+	return uninstallGroup, nil
+}
+
+func (o *Otel) UpdateApiKeyView(defaultPath string) (*huh.Group, error) {
+	updateGroup := huh.NewGroup(
+		huh.NewNote().
+			Title(o.header),
+
+		huh.NewInput().
+			Key("apikey").
+			Title("Enter your new Hosted Graphite API key").
+			Prompt("API Key: ").
+			Validate(func(s string) error {
+				err := utils.ValidateAPIKey(o.apikey)
+				if err != nil {
+					return err
+				}
+				return nil
+			}).
+			Value(&o.apikey).
+			EchoMode(huh.EchoModePassword),
+
+		huh.NewInput().
+			Key("path").
+			Title("Enter the path to the OpenTelemetry yaml file").
+			Prompt("Path: ").
+			Description("The default location is already populated. If the path is different please update below.").
+			Placeholder(defaultPath).
+			Value(&o.path).
+			Validate(func(s string) error {
+				if s == "" {
+					s = defaultPath
+				}
+				err := otel.ValidateFilePath(s)
+				if err != nil {
+					return err
+				}
+				return nil
+			}),
+	)
+
+	return updateGroup, nil
+}
 
 func NewAgentsFields(agent string) AgentsFieldViews {
 	header := getHeader(agent)
@@ -137,8 +218,10 @@ func NewAgentsFields(agent string) AgentsFieldViews {
 		return &Telegraf{
 			header: header,
 		}
-	case "otel":
-		return nil
+	case "opentelemetry":
+		return &Otel{
+			header: header,
+		}
 	default:
 		return nil
 	}

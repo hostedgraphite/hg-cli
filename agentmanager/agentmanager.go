@@ -21,7 +21,7 @@ func NewAgent(agentName string, options map[string]interface{}, sysInfo sysinfo.
 	switch strings.ToLower(agentName) {
 	case "telegraf":
 		return telegraf.NewTelegrafAgent(options, sysInfo)
-	case "otel":
+	case "otel", "opentelemetry":
 		return otel.NewOtelAgent(options, sysInfo)
 	default:
 		return nil

@@ -77,6 +77,7 @@ func validateArgs(args []string) error {
 func execute(apikey, agentName, path string, sysInfo sysinfo.SysInfo) error {
 	var err error
 	var serviceSettings map[string]string
+	var summary formatters.SummaryContent
 
 	options := map[string]interface{}{
 		"config": path,
@@ -87,8 +88,26 @@ func execute(apikey, agentName, path string, sysInfo sysinfo.SysInfo) error {
 	switch agentName {
 	case "telegraf":
 		serviceSettings = telegraf.GetServiceSettings(sysInfo.Os, sysInfo.Arch, sysInfo.PkgMngr)
+		summary = &formatters.TelegrafSummary{
+			ActionSummary: formatters.ActionSummary{
+				Agent:      agentName,
+				Success:    true,
+				Action:     "Update Api Key",
+				Config:     path,
+				RestartCmd: serviceSettings["restartHint"],
+			},
+		}
 	case "otel":
 		serviceSettings = otel.GetServiceSettings(sysInfo.Os, sysInfo.Arch, sysInfo.PkgMngr)
+		summary = &formatters.OtelContribSummary{
+			ActionSummary: formatters.ActionSummary{
+				Agent:      agentName,
+				Success:    true,
+				Action:     "Update Api Key",
+				Config:     path,
+				RestartCmd: serviceSettings["restartHint"],
+			},
+		}
 	}
 	updateApikeyPipeline, err := agent.UpdateApiKeyPipeline(updates)
 	if err != nil {
@@ -104,14 +123,6 @@ func execute(apikey, agentName, path string, sysInfo sysinfo.SysInfo) error {
 	err = runner.Run()
 	if err != nil {
 		return err
-	}
-
-	summary := formatters.ActionSummary{
-		Agent:      agentName,
-		Success:    true,
-		Action:     "Update Api Key",
-		Config:     path,
-		RestartCmd: serviceSettings["restartHint"],
 	}
 
 	fmt.Println(formatters.GenerateCliSummary(summary))

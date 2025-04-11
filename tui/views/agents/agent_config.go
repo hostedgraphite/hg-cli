@@ -1,6 +1,7 @@
 package agents
 
 import (
+	"github.com/hostedgraphite/hg-cli/agentmanager/otel"
 	"github.com/hostedgraphite/hg-cli/agentmanager/telegraf"
 
 	"github.com/hostedgraphite/hg-cli/styles"
@@ -24,20 +25,23 @@ type AgentConfigView struct {
 func NewAgentConfigView(agent, action string, sysInfo sysinfo.SysInfo) *AgentConfigView {
 	var err error
 	var actionGroup *huh.Group
-	var apikey, selectedInstall, path string
-	var selectedPlugins []string
-	var confirmUninstall bool
-	settings := telegraf.GetServiceSettings(sysInfo.Os, sysInfo.Arch, sysInfo.PkgMngr)
+	var settings map[string]string
+	switch agent {
+	case "Telegraf":
+		settings = telegraf.GetServiceSettings(sysInfo.Os, sysInfo.Arch, sysInfo.PkgMngr)
+	case "Otel", "OpenTelemetry":
+		settings = otel.GetServiceSettings(sysInfo.Os, sysInfo.Arch, sysInfo.PkgMngr)
+	}
 
 	agentViews := NewAgentsFields(agent)
 
 	switch action {
 	case "Install":
-		actionGroup, err = agentViews.InstallView(apikey, selectedInstall, selectedPlugins)
+		actionGroup, err = agentViews.InstallView()
 	case "Uninstall":
-		actionGroup, err = agentViews.UninstallView(confirmUninstall)
+		actionGroup, err = agentViews.UninstallView()
 	case "Update Api Key":
-		actionGroup, err = agentViews.UpdateApiKeyView(apikey, path, settings["configPath"])
+		actionGroup, err = agentViews.UpdateApiKeyView(settings["configPath"])
 	default:
 		return nil
 	}
@@ -56,7 +60,6 @@ func NewAgentConfigView(agent, action string, sysInfo sysinfo.SysInfo) *AgentCon
 		form:            form,
 		agent:           agent,
 		action:          action,
-		apiKey:          apikey,
 		sysInfo:         sysInfo,
 		serviceSettings: settings,
 	}
