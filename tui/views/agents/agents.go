@@ -231,6 +231,8 @@ func getHeader(agent string) string {
 	switch agent {
 	case "Telegraf":
 		return styles.MfAndTelegrafTitle
+	case "OpenTelemetry":
+		return styles.MfAndOpentelemetryTitle
 	default:
 		return styles.MetricfireLogo
 	}
