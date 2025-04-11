@@ -85,6 +85,8 @@ func validateArgs(args, plugins []string) error {
 		return fmt.Errorf("no agent specified or agent not supported; see 'cli agent -l' for compatible agents")
 	}
 
+	// TODO: Ensure Otel doesn't have any plugins passed.
+
 	return nil
 }
 
@@ -92,10 +94,10 @@ func execute(apikey, agentName string, plugins []string, sysInfo sysinfo.SysInfo
 	var err error
 	var selectedPlugins []string
 	var serviceSettings map[string]string
+	var summary formatters.SummaryContent
 
 	options := map[string]interface{}{
-		"plugins": selectedPlugins,
-		"apikey":  apikey,
+		"apikey": apikey,
 	}
 
 	switch agentName {
@@ -106,11 +108,33 @@ func execute(apikey, agentName string, plugins []string, sysInfo sysinfo.SysInfo
 		} else {
 			selectedPlugins = plugins
 		}
+		summary = &formatters.TelegrafSummary{
+			ActionSummary: formatters.ActionSummary{
+				Agent:    agentName,
+				Success:  true,
+				Action:   "Install",
+				Config:   serviceSettings["configPath"],
+				StartCmd: serviceSettings["startHint"],
+				Error:    "",
+			},
+			Plugins: selectedPlugins,
+		}
+		options["plugins"] = selectedPlugins
 	case "otel":
 		serviceSettings = otel.GetServiceSettings(sysInfo.Os, sysInfo.Arch, sysInfo.PkgMngr)
-		selectedPlugins = otel.DefaultConfig
+		summary = &formatters.OtelContribSummary{
+			ActionSummary: formatters.ActionSummary{
+				Agent:    agentName,
+				Success:  true,
+				Action:   "Install",
+				Config:   serviceSettings["configPath"],
+				StartCmd: serviceSettings["startHint"],
+				Error:    "",
+			},
+			Receiver: serviceSettings["receiver"],
+			Exporter: serviceSettings["exporter"],
+		}
 	}
-
 	agent := agentmanager.NewAgent(agentName, options, sysInfo)
 
 	// Build the pipeline
@@ -129,16 +153,6 @@ func execute(apikey, agentName string, plugins []string, sysInfo sysinfo.SysInfo
 	err = runner.Run()
 	if err != nil {
 		return err
-	}
-
-	summary := formatters.ActionSummary{
-		Agent:    agentName,
-		Success:  true,
-		Action:   "Install",
-		Plugins:  selectedPlugins,
-		Config:   serviceSettings["configPath"],
-		StartCmd: serviceSettings["startHint"],
-		Error:    "",
 	}
 
 	fmt.Println(formatters.GenerateCliSummary(summary))

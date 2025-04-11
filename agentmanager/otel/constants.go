@@ -11,6 +11,8 @@ var ServiceDetails = map[string]map[string]map[string]string{
 			"configPath":  "/etc/otelcol-contrib/config.yaml",
 			"startHint":   "sudo systemctl start otelcol-contrib",
 			"restartHint": "sudo systemctl restart otelcol-contrib",
+			"receiver":    "hostmetrics",
+			"exporter":    "carbon",
 		},
 	},
 	"windows": {
@@ -19,6 +21,8 @@ var ServiceDetails = map[string]map[string]map[string]string{
 			"configPath":  "C:\\Program Files\\OpenTelemetry Collector Contrib\\config.yaml",
 			"startHint":   "sc.exe start otelcol-contrib",
 			"restartHint": "Restart-Service otelcol-contrib",
+			"receiver":    "hostmetrics",
+			"exporter":    "carbon",
 		},
 	},
 	"darwin": {
@@ -26,6 +30,8 @@ var ServiceDetails = map[string]map[string]map[string]string{
 			"configPath":  "/usr/local/etc/otelcol-contrib/config.yaml",
 			"startHint":   "launchctl load ~/Library/LaunchAgents/com.otelcol-contrib-agent.plist",
 			"restartHint": "launchctl stop/start otelcol-contrib-agent",
+			"receiver":    "hostmetrics",
+			"exporter":    "carbon",
 		},
 	},
 }
