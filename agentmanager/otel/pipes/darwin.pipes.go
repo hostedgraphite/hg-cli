@@ -27,6 +27,7 @@ func DarwinInstallPipes(sysInfo sysinfo.SysInfo) []*pipeline.Pipe {
 			Name: "Creating Temporary Dir",
 			Cmd: exec.Command(
 				"mkdir",
+				"-p",
 				tmpDir,
 			),
 		},
@@ -54,9 +55,9 @@ func DarwinInstallPipes(sysInfo sysinfo.SysInfo) []*pipeline.Pipe {
 		{
 			Name: "Moving Exe File to /usr/local/bin",
 			Cmd: exec.Command(
-				"mv",
-				"/tmp/hg-cli/otelcol-contrib",
-				"/usr/local/bin/",
+				"sh",
+				"-c",
+				`mkdir -p /usr/local/bin && mv /tmp/hg-cli/otelcol-contrib /usr/local/bin/`,
 			),
 		},
 		{
@@ -79,17 +80,11 @@ func DarwinConfigPipes(options map[string]interface{}, serviceSettings map[strin
 
 	pipes := []*pipeline.Pipe{
 		{
-			Name: "Creating Otel-Contrib Config Directory",
-			Cmd: exec.Command(
-				"mkdir",
-				"/usr/local/etc/otelcol-contrib",
-			),
-		},
-		{
 			Name: "Creating Config.Yaml",
 			Cmd: exec.Command(
-				"touch",
-				"/usr/local/etc/otelcol-contrib/config.yaml",
+				"sh",
+				"-c",
+				`mkdir -p /usr/local/etc/otelcol-contrib && touch /usr/local/etc/otelcol-contrib/config.yaml`,
 			),
 		},
 		{
