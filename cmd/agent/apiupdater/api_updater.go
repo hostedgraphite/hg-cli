@@ -35,8 +35,7 @@ func ApiUpdateCmd(sysinfo sysinfo.SysInfo) *cobra.Command {
 			}
 			agentName = args[0]
 
-			// Otel will require sudo permissions to update the config file
-			if agentName == "otel" && cliUtils.ActionRequiresSudo(sysinfo.Os, "update", sysinfo.PkgMngr) && !sysinfo.SudoPerm {
+			if cliUtils.AgentRequiresSudo(sysinfo.Os, "update", sysinfo.PkgMngr, agentName) && !sysinfo.SudoPerm {
 				return fmt.Errorf("this cmd requires admin privileges, please run as root")
 			}
 

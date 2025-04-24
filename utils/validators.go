@@ -25,6 +25,21 @@ func ValidateAPIKey(apikey string) error {
 	return nil
 }
 
+func AgentRequiresSudo(os, action, pkgmngr, agent string) bool {
+	needSudo := true
+
+	if agent == "otel" {
+		return true
+	} else if agent == "telegraf" {
+		if pkgmngr == "brew" {
+			return false
+		}
+	}
+
+	return needSudo
+}
+
+// Previous sudo checker
 func ActionRequiresSudo(os, action, pkgmngr string) bool {
 	if pkgmngr == "brew" {
 		return false
