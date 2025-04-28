@@ -27,6 +27,7 @@ func DarwinInstallPipes(sysInfo sysinfo.SysInfo) []*pipeline.Pipe {
 			Name: "Creating Temporary Dir",
 			Cmd: exec.Command(
 				"mkdir",
+				"-p",
 				tmpDir,
 			),
 		},
@@ -54,9 +55,9 @@ func DarwinInstallPipes(sysInfo sysinfo.SysInfo) []*pipeline.Pipe {
 		{
 			Name: "Moving Exe File to /usr/local/bin",
 			Cmd: exec.Command(
-				"mv",
-				"/tmp/hg-cli/otelcol-contrib",
-				"/usr/local/bin/",
+				"sh",
+				"-c",
+				`mkdir -p /usr/local/bin && mv /tmp/hg-cli/otelcol-contrib /usr/local/bin/`,
 			),
 		},
 		{
@@ -79,17 +80,11 @@ func DarwinConfigPipes(options map[string]interface{}, serviceSettings map[strin
 
 	pipes := []*pipeline.Pipe{
 		{
-			Name: "Creating Otel-Contrib Config Directory",
-			Cmd: exec.Command(
-				"mkdir",
-				"/usr/local/etc/otelcol-contrib",
-			),
-		},
-		{
 			Name: "Creating Config.Yaml",
 			Cmd: exec.Command(
-				"touch",
-				"/usr/local/etc/otelcol-contrib/config.yaml",
+				"sh",
+				"-c",
+				`mkdir -p /usr/local/etc/otelcol-contrib && touch /usr/local/etc/otelcol-contrib/config.yaml`,
 			),
 		},
 		{
@@ -121,13 +116,21 @@ func DarwinConfigPipes(options map[string]interface{}, serviceSettings map[strin
 }
 
 func DarwinUninstallPipes() []*pipeline.Pipe {
-	homeDir := os.Getenv("HOME")
-	plistPath := homeDir + "/Library/LaunchAgents/com.otelcol-contrib-agent.plist"
+	// otel is installed and used on a user level on mac
+	// since the cli command needs sudo to be ran
+	// it causes issues during stop/unloading.
+	// The orignial user not sudo is used and passed to the
+	// launch commands.
+	origUser := os.Getenv("SUDO_USER")
+	plistPath := fmt.Sprintf("/Users/%s/Library/LaunchAgents/com.otelcol-contrib-agent.plist", origUser)
 
 	pipes := []*pipeline.Pipe{
 		{
 			Name: "Stopping Otel-Contrib Agent",
 			Cmd: exec.Command(
+				"sudo",
+				"-u",
+				origUser,
 				"launchctl",
 				"stop",
 				"com.otelcol-contrib-agent",
@@ -136,6 +139,9 @@ func DarwinUninstallPipes() []*pipeline.Pipe {
 		{
 			Name: "Unloading Otel-Contrib Agent",
 			Cmd: exec.Command(
+				"sudo",
+				"-u",
+				origUser,
 				"launchctl",
 				"unload",
 				plistPath,
@@ -144,16 +150,9 @@ func DarwinUninstallPipes() []*pipeline.Pipe {
 		{
 			Name: "Removing Otel-Contrib Agent Plist File",
 			Cmd: exec.Command(
-				"rm",
-				plistPath,
-			),
-		},
-		{
-			Name: "Removing Otel-Contrib Config Directory",
-			Cmd: exec.Command(
-				"rm",
-				"-rf",
-				"/usr/local/etc/otelcol-contrib",
+				"sh",
+				"-c",
+				`rm ~/Library/LaunchAgents/com.otelcol-contrib-agent.plist`,
 			),
 		},
 		{

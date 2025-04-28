@@ -84,6 +84,7 @@ func GetSystemInformation() (SysInfo, error) {
 	switch goOs {
 	case "darwin":
 		pkgmngr = "brew"
+		sudoPerm = checkSudoPerm()
 	case "linux":
 		releaseInfo, err := getOSRelease()
 		if err == nil {

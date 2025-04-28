@@ -28,7 +28,14 @@ var ServiceDetails = map[string]map[string]map[string]string{
 	"darwin": {
 		"amd64": {
 			"configPath":  "/usr/local/etc/otelcol-contrib/config.yaml",
-			"startHint":   "launchctl load ~/Library/LaunchAgents/com.otelcol-contrib-agent.plist",
+			"startHint":   "launchctl start com.otelcol-contrib-agent",
+			"restartHint": "launchctl stop/start otelcol-contrib-agent",
+			"receiver":    "hostmetrics",
+			"exporter":    "carbon",
+		},
+		"arm64": {
+			"configPath":  "/usr/local/etc/otelcol-contrib/config.yaml",
+			"startHint":   "launchctl start com.otelcol-contrib-agent",
 			"restartHint": "launchctl stop/start otelcol-contrib-agent",
 			"receiver":    "hostmetrics",
 			"exporter":    "carbon",

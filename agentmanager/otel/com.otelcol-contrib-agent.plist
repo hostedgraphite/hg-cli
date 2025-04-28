@@ -15,10 +15,5 @@
     <key>RunAtLoad</key>
     <true/>
 
-    <key>StandardOutPath</key>
-    <string>/usr/local/var/log/otelcol-contrib.log</string>
-
-    <key>StandardErrorPath</key>
-    <string>/usr/local/var/log/otelcol-contrib.err.log</string>
 </dict>
 </plist>
