@@ -43,7 +43,7 @@ func WindowsInstallPipes(sysInfo sysinfo.SysInfo) ([]*pipeline.Pipe, error) {
 		},
 		{
 			Name: "Installing Telegraf as Windows service",
-			Cmd:  exec.Command(shell, "-Command", `& "C:\Program Files\InfluxData\telegraf\telegraf.exe" --service-name telegraf service install`),
+			Cmd:  exec.Command(shell, "-Command", `& "C:\Program Files\InfluxData\telegraf\telegraf.exe" --service-name telegraf --config "C:\Program Files\InfluxData\telegraf\telegraf.conf" service install`),
 		},
 	}
 
