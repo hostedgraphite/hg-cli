@@ -22,10 +22,6 @@ func UninstallCmd(sysinfo sysinfo.SysInfo) *cobra.Command {
 		Short: "Uninstall a monitoring agent.",
 		Long:  "Uninstall a monitoring agent.",
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			// Validate if the cmd requires sudo
-			if cliUtils.ActionRequiresSudo(sysinfo.Os, "uninstall", sysinfo.PkgMngr) && !sysinfo.SudoPerm {
-				return fmt.Errorf("this cmd requires admin privileges, please run as root")
-			}
 
 			list, _ := cmd.Flags().GetBool("list")
 			if list {
@@ -37,6 +33,10 @@ func UninstallCmd(sysinfo sysinfo.SysInfo) *cobra.Command {
 				return err
 			}
 			agentName = args[0]
+			// Validate if the cmd requires sudo
+			if cliUtils.AgentRequiresSudo(sysinfo.Os, "uninstall", sysinfo.PkgMngr, agentName) && !sysinfo.SudoPerm {
+				return fmt.Errorf("this cmd requires admin privileges, please run as root")
+			}
 			completed = true
 			return nil
 		},
@@ -69,6 +69,7 @@ func validateArgs(args []string) error {
 
 func execute(agentName string, sysInfo sysinfo.SysInfo) error {
 	var err error
+	var summary formatters.SummaryContent
 
 	agent := agentmanager.NewAgent(agentName, nil, sysInfo)
 	updates := make(chan *pipeline.Pipe)
@@ -88,10 +89,21 @@ func execute(agentName string, sysInfo sysinfo.SysInfo) error {
 		return err
 	}
 
-	summary := formatters.ActionSummary{
+	data := formatters.ActionSummary{
 		Agent:   agentName,
 		Success: true,
 		Action:  "Uninstall",
+	}
+
+	switch agentName {
+	case "telegraf":
+		summary = &formatters.TelegrafSummary{
+			ActionSummary: data,
+		}
+	case "otel":
+		summary = &formatters.OtelContribSummary{
+			ActionSummary: data,
+		}
 	}
 
 	fmt.Println(formatters.GenerateCliSummary(summary))

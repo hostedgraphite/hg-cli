@@ -9,7 +9,7 @@ import (
 	"slices"
 )
 
-var agents = []string{"telegraf"}
+var agents = []string{"telegraf", "otel"}
 
 func ShowAvailableAgents() {
 	fmt.Println("Available agent: ")

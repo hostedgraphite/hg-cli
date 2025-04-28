@@ -14,7 +14,7 @@ import (
 )
 
 var agents = []string{"Telegraf", "OpenTelemetry"}
-var commingSoon = []string{"OpenTelemetry"}
+var commingSoon = []string{""}
 var agentActions = []string{"Install", "Update Api Key", "Uninstall"}
 
 type AgentsView struct {
@@ -59,7 +59,7 @@ func NewAgentView(sysInfo sysinfo.SysInfo) *AgentsView {
 				}
 			}, &selectedAgent).
 			Validate(func(action string) error {
-				if utils.ActionRequiresSudo(sysInfo.Os, action, sysInfo.PkgMngr) && !sysInfo.SudoPerm {
+				if utils.AgentRequiresSudo(sysInfo.Os, action, sysInfo.PkgMngr, selectedAgent) && !sysInfo.SudoPerm {
 					return fmt.Errorf("this action requires admin privileges, please run as root")
 				}
 				return nil

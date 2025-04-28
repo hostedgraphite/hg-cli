@@ -40,7 +40,7 @@ type mainMenu struct {
 	Footer lipgloss.Style
 }
 
-type summary struct {
+type Summary struct {
 	Base,
 	Container,
 	Action,
@@ -51,8 +51,8 @@ type summary struct {
 	Footer lipgloss.Style
 }
 
-func SummaryStyles(status bool) summary {
-	var s summary
+func SummaryStyles(status bool) Summary {
+	var s Summary
 
 	s.Base = lipgloss.NewStyle().
 		Width(80).

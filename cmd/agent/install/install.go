@@ -1,11 +1,10 @@
 package install
 
 import (
-	//  "fmt"
-
 	"fmt"
 
 	"github.com/hostedgraphite/hg-cli/agentmanager"
+	"github.com/hostedgraphite/hg-cli/agentmanager/otel"
 	"github.com/hostedgraphite/hg-cli/agentmanager/telegraf"
 	"github.com/hostedgraphite/hg-cli/agentmanager/utils"
 	"github.com/hostedgraphite/hg-cli/formatters"
@@ -14,7 +13,6 @@ import (
 	cliUtils "github.com/hostedgraphite/hg-cli/utils"
 
 	// windows color support
-
 	"github.com/spf13/cobra"
 )
 
@@ -32,10 +30,6 @@ func InstallCmd(sysinfo sysinfo.SysInfo) *cobra.Command {
 		Long:          "Install a moniting agent. Use --custom for custom installation",
 		SilenceErrors: true,
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			// Validate if the cmd requires sudo
-			if cliUtils.ActionRequiresSudo(sysinfo.Os, "install", sysinfo.PkgMngr) && !sysinfo.SudoPerm {
-				return fmt.Errorf("this cmd requires admin privileges, please run as root")
-			}
 
 			// Check if the --list flag is added, which is a global flag
 			list, _ := cmd.Flags().GetBool("list")
@@ -49,11 +43,16 @@ func InstallCmd(sysinfo sysinfo.SysInfo) *cobra.Command {
 			}
 
 			agentName = args[0]
+			// Validate if the cmd requires sudo
+			if cliUtils.AgentRequiresSudo(sysinfo.Os, "install", sysinfo.PkgMngr, agentName) && !sysinfo.SudoPerm {
+				return fmt.Errorf("this cmd requires admin privileges, please run as root")
+			}
+
 			completed = true
 
 			// Kind of wierd but, if the flags are marked required outisde of the PreRunE
 			// the requiremet error will also populate when the --list flag is added.
-			cmd.MarkFlagRequired("apikey")
+			cmd.MarkFlagRequired("api-key")
 
 			return nil
 		},
@@ -84,24 +83,56 @@ func validateArgs(args, plugins []string) error {
 		return fmt.Errorf("no agent specified or agent not supported; see 'cli agent -l' for compatible agents")
 	}
 
+	// TODO: Ensure Otel doesn't have any plugins passed.
+
 	return nil
 }
 
 func execute(apikey, agentName string, plugins []string, sysInfo sysinfo.SysInfo) error {
 	var err error
 	var selectedPlugins []string
-
-	if len(plugins) == 0 {
-		selectedPlugins = telegraf.DefaultTelegrafPlugins
-	} else {
-		selectedPlugins = plugins
-	}
+	var serviceSettings map[string]string
+	var summary formatters.SummaryContent
 
 	options := map[string]interface{}{
-		"plugins": selectedPlugins,
-		"apikey":  apikey,
+		"apikey": apikey,
 	}
-	serviceSettings := telegraf.GetServiceSettings(sysInfo.Os, sysInfo.Arch, sysInfo.PkgMngr)
+
+	switch agentName {
+	case "telegraf":
+		serviceSettings = telegraf.GetServiceSettings(sysInfo.Os, sysInfo.Arch, sysInfo.PkgMngr)
+		if len(plugins) == 0 {
+			selectedPlugins = telegraf.DefaultTelegrafPlugins
+		} else {
+			selectedPlugins = plugins
+		}
+		summary = &formatters.TelegrafSummary{
+			ActionSummary: formatters.ActionSummary{
+				Agent:    agentName,
+				Success:  true,
+				Action:   "Install",
+				Config:   serviceSettings["configPath"],
+				StartCmd: serviceSettings["startHint"],
+				Error:    "",
+			},
+			Plugins: selectedPlugins,
+		}
+		options["plugins"] = selectedPlugins
+	case "otel":
+		serviceSettings = otel.GetServiceSettings(sysInfo.Os, sysInfo.Arch, sysInfo.PkgMngr)
+		summary = &formatters.OtelContribSummary{
+			ActionSummary: formatters.ActionSummary{
+				Agent:    agentName,
+				Success:  true,
+				Action:   "Install",
+				Config:   serviceSettings["configPath"],
+				StartCmd: serviceSettings["startHint"],
+				Error:    "",
+			},
+			Receiver: serviceSettings["receiver"],
+			Exporter: serviceSettings["exporter"],
+		}
+	}
 	agent := agentmanager.NewAgent(agentName, options, sysInfo)
 
 	// Build the pipeline
@@ -120,16 +151,6 @@ func execute(apikey, agentName string, plugins []string, sysInfo sysinfo.SysInfo
 	err = runner.Run()
 	if err != nil {
 		return err
-	}
-
-	summary := formatters.ActionSummary{
-		Agent:    agentName,
-		Success:  true,
-		Action:   "Install",
-		Plugins:  selectedPlugins,
-		Config:   serviceSettings["configPath"],
-		StartCmd: serviceSettings["startHint"],
-		Error:    "",
 	}
 
 	fmt.Println(formatters.GenerateCliSummary(summary))
